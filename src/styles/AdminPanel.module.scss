@@ -1,0 +1,414 @@
+@use "sass:color";
+
+$text-color: #374151;
+$border-color: #e5e7eb;
+$white: #ffffff;
+$primary-color: #6366f1;
+$hover-bg: #f3f4f6;
+$error-color: #ef4444;
+$success-color: #10b981;
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  
+  @media (min-width: 640px) {
+    padding: 1.5rem;
+  }
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: $text-color;
+  margin-bottom: 1.5rem;
+}
+
+.error {
+  background-color: color.adjust($error-color, $lightness: 45%);
+  color: color.adjust($error-color, $lightness: -20%);
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+  border: 1px solid color.adjust($error-color, $lightness: 30%);
+}
+
+.success {
+  background-color: color.adjust($success-color, $lightness: 45%);
+  color: color.adjust($success-color, $lightness: -20%);
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+  border: 1px solid color.adjust($success-color, $lightness: 30%);
+}
+
+.panel {
+  background-color: $white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid $border-color;
+  
+  .tab {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: color.adjust($text-color, $lightness: 20%);
+    border-bottom: 2px solid transparent;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      color: $text-color;
+    }
+    
+    &.activeTab {
+      color: $primary-color;
+      border-bottom-color: $primary-color;
+    }
+    
+    .tabIcon {
+      margin-right: 0.5rem;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}
+
+.content {
+  padding: 1.5rem;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  .search {
+    position: relative;
+    
+    .searchIcon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.25rem;
+      height: 1.25rem;
+      color: color.adjust($text-color, $lightness: 30%);
+    }
+    
+    .searchInput {
+      padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+      border: 1px solid $border-color;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      width: 100%;
+      min-width: 16rem;
+      
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 2px color.adjust($primary-color, $lightness: 30%, $alpha: -0.7);
+      }
+    }
+  }
+  
+  .addButton {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: $primary-color;
+    color: $white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background-color: color.adjust($primary-color, $lightness: -5%);
+    }
+    
+    .buttonIcon {
+      margin-right: 0.5rem;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}
+
+.formCard {
+  background-color: color.adjust($hover-bg, $lightness: 1%);
+  border: 1px solid $border-color;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid $border-color;
+  
+  .formTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+  
+  .closeButton {
+    background: none;
+    border: none;
+    color: color.adjust($text-color, $lightness: 30%);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      color: $text-color;
+    }
+    
+    .closeIcon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}
+
+.form {
+  padding: 1.5rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+  
+  .formGroupFull {
+    grid-column: span 2;
+    
+    @media (max-width: 640px) {
+      grid-column: span 1;
+    }
+  }
+}
+
+.formGroup {
+  margin-bottom: 0.5rem;
+  
+  .label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $text-color;
+    margin-bottom: 0.5rem;
+  }
+  
+  .input, .textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid $border-color;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    background-color: $white;
+    
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 2px color.adjust($primary-color, $lightness: 30%, $alpha: -0.7);
+    }
+  }
+  
+  .textarea {
+    resize: vertical;
+    min-height: 6rem;
+  }
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  
+  .cancelButton, .saveButton {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .cancelButton {
+    background-color: $white;
+    border: 1px solid $border-color;
+    color: $text-color;
+    
+    &:hover {
+      background-color: $hover-bg;
+    }
+  }
+  
+  .saveButton {
+    display: flex;
+    align-items: center;
+    background-color: $primary-color;
+    border: none;
+    color: $white;
+    
+    &:hover {
+      background-color: color.adjust($primary-color, $lightness: -5%);
+    }
+    
+    .buttonIcon {
+      margin-right: 0.5rem;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border: 1px solid $border-color;
+  border-radius: 0.5rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  
+  .tableHeader {
+    background-color: color.adjust($hover-bg, $lightness: 1%);
+    
+    .tableHeaderCell {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: color.adjust($text-color, $lightness: 20%);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid $border-color;
+      cursor: pointer;
+      
+      &:hover {
+        background-color: color.adjust($hover-bg, $lightness: -1%);
+      }
+      
+      .headerContent {
+        display: flex;
+        align-items: center;
+        
+        .sortIcon {
+          margin-left: 0.25rem;
+          width: 1rem;
+          height: 1rem;
+        }
+      }
+      
+      .srOnly {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+      }
+    }
+  }
+  
+  .tableRow {
+    &:hover {
+      background-color: color.adjust($hover-bg, $lightness: 1%);
+    }
+    
+    &:not(:last-child) {
+      border-bottom: 1px solid $border-color;
+    }
+  }
+  
+  .tableCell {
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: $text-color;
+    
+    .nameCell, .emailCell, .positionCell, .phoneCell, .contactCell {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  
+  .actionCell {
+    padding: 1rem;
+    text-align: right;
+    white-space: nowrap;
+    
+    .editAction, .deleteAction {
+      background: none;
+      border: none;
+      padding: 0.25rem;
+      margin-left: 0.5rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      
+      .actionIcon {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+    
+    .editAction {
+      color: $primary-color;
+      
+      &:hover {
+        color: color.adjust($primary-color, $lightness: -10%);
+      }
+    }
+    
+    .deleteAction {
+      color: $error-color;
+      
+      &:hover {
+        color: color.adjust($error-color, $lightness: -10%);
+      }
+    }
+  }
+  
+  .loadingCell, .emptyCell {
+    padding: 2rem;
+    text-align: center;
+    color: color.adjust($text-color, $lightness: 30%);
+    font-size: 0.875rem;
+  }
+}
