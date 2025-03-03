@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { UserPlus, AlertCircle } from 'lucide-react';
@@ -12,8 +12,16 @@ function Register() {
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      console.log("User already logged in, redirecting to dashboard");
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,11 +61,12 @@ function Register() {
       // After successful registration, navigate to login page
       setTimeout(() => {
         navigate('/login', { 
+          replace: true,
           state: { 
             message: 'Registration successful! Please sign in with your credentials.' 
           } 
         });
-      }, 500);
+      }, 1000);
     } catch (error) {
       console.error('Registration error:', error);
       setError(error.message || 'Failed to create an account.');

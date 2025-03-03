@@ -11,9 +11,17 @@ function Login() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      console.log("User already logged in, redirecting to dashboard");
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   // Check for success message from registration
   useEffect(() => {
@@ -40,8 +48,11 @@ function Login() {
       }
       
       console.log('Login successful, navigating to dashboard');
-      // Force navigation to dashboard after successful login
-      window.location.href = '/dashboard';
+      
+      // Use a small delay before redirecting
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 500);
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message || 'Failed to sign in. Please check your credentials.');

@@ -1,5 +1,5 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Lazy load components to improve initial load time
@@ -49,6 +49,16 @@ const LoadingFallback = () => (
 // Private route component
 const PrivateRoute = ({ children }) => {
   const { user, loading, error } = useAuth();
+  const navigate = useNavigate();
+  
+  console.log("PrivateRoute - User:", user ? "Exists" : "None", "Loading:", loading);
+  
+  useEffect(() => {
+    if (!loading && !user) {
+      console.log("No user found, redirecting to login");
+      navigate('/login');
+    }
+  }, [user, loading, navigate]);
   
   if (loading) {
     return <LoadingFallback />;
@@ -72,6 +82,24 @@ const PrivateRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" />;
 };
 
+// Root component to handle initial redirect
+const Root = () => {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        navigate('/dashboard');
+      } else {
+        navigate('/login');
+      }
+    }
+  }, [user, loading, navigate]);
+  
+  return <LoadingFallback />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -85,7 +113,7 @@ function App() {
                 <Dashboard />
               </PrivateRoute>
             } />
-            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/" element={<Root />} />
             <Route path="*" element={
               <div style={{ 
                 padding: '20px', 

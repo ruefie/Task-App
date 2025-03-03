@@ -48,11 +48,15 @@ export function AuthProvider({ children }) {
         const session = data?.session;
         console.log("Session data:", session ? "Session exists" : "No session");
         
-        setUser(session?.user ?? null);
-        
         if (session?.user) {
+          console.log("User found in session:", session.user.id);
+          setUser(session.user);
           await loadUserProfile(session.user.id);
         } else {
+          console.log("No user in session");
+          setUser(null);
+          setProfile(null);
+          setIsAdmin(false);
           setLoading(false);
         }
       } catch (err) {
@@ -71,11 +75,16 @@ export function AuthProvider({ children }) {
       console.log("Auth state changed:", event, session ? "Session exists" : "No session");
       
       try {
-        setUser(session?.user ?? null);
-        
         if (session?.user) {
-          await loadUserProfile(session.user.id);
+          console.log("User found in auth change:", session.user.id, "Event:", event);
+          setUser(session.user);
+          
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            await loadUserProfile(session.user.id);
+          }
         } else {
+          console.log("No user in auth change. Event:", event);
+          setUser(null);
           setProfile(null);
           setIsAdmin(false);
           setLoading(false);
@@ -100,10 +109,15 @@ export function AuthProvider({ children }) {
     try {
       console.log("Loading user profile for:", userId);
       const profileData = await profilesService.getProfile();
-      console.log("Profile data loaded:", profileData ? "Profile exists" : "No profile");
+      console.log("Profile data loaded:", profileData);
       
-      setProfile(profileData);
-      setIsAdmin(profileData?.is_admin || false);
+      if (profileData) {
+        setProfile(profileData);
+        setIsAdmin(profileData.is_admin || false);
+        console.log("Profile set, isAdmin:", profileData.is_admin);
+      } else {
+        console.log("No profile data returned");
+      }
     } catch (error) {
       console.error('Error loading user profile:', error);
       setError(error.message);
@@ -186,6 +200,9 @@ export function AuthProvider({ children }) {
           setError(result.error.message);
         } else {
           console.log("Sign in successful:", result.data.user.id);
+          
+          // Set user immediately
+          setUser(result.data.user);
           
           // Ensure profile is loaded after sign in
           if (result.data.user) {
