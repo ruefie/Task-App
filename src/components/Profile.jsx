@@ -31,6 +31,8 @@ function Profile() {
     setLoading(true);
     
     try {
+      console.log('Updating profile with:', { first_name: firstName, last_name: lastName });
+      
       await updateProfile({
         first_name: firstName,
         last_name: lastName

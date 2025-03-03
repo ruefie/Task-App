@@ -48,13 +48,11 @@ export function AuthProvider({ children }) {
         const session = data?.session;
         console.log("Session data:", session ? "Session exists" : "No session");
         
+        setUser(session?.user ?? null);
+        
         if (session?.user) {
-          setUser(session.user);
           await loadUserProfile(session.user.id);
         } else {
-          setUser(null);
-          setProfile(null);
-          setIsAdmin(false);
           setLoading(false);
         }
       } catch (err) {
@@ -73,11 +71,11 @@ export function AuthProvider({ children }) {
       console.log("Auth state changed:", event, session ? "Session exists" : "No session");
       
       try {
+        setUser(session?.user ?? null);
+        
         if (session?.user) {
-          setUser(session.user);
           await loadUserProfile(session.user.id);
         } else {
-          setUser(null);
           setProfile(null);
           setIsAdmin(false);
           setLoading(false);
@@ -104,15 +102,8 @@ export function AuthProvider({ children }) {
       const profileData = await profilesService.getProfile();
       console.log("Profile data loaded:", profileData ? "Profile exists" : "No profile");
       
-      if (profileData) {
-        setProfile(profileData);
-        setIsAdmin(profileData.is_admin || false);
-      } else {
-        // If no profile exists, create one
-        const newProfile = await profilesService.createProfile(userId, {});
-        setProfile(newProfile);
-        setIsAdmin(newProfile.is_admin || false);
-      }
+      setProfile(profileData);
+      setIsAdmin(profileData?.is_admin || false);
     } catch (error) {
       console.error('Error loading user profile:', error);
       setError(error.message);
@@ -140,14 +131,10 @@ export function AuthProvider({ children }) {
       try {
         console.log("Signing up with:", { email: data.email, metadata: data.options?.data });
         
-        // IMPORTANT: For development, we're disabling email confirmation
+        // Disable email confirmation for development
         const options = {
           ...data.options,
           emailRedirectTo: window.location.origin,
-          // This is critical for development - disable email confirmation
-          data: {
-            ...data.options?.data
-          }
         };
         
         const result = await supabase.auth.signUp({
@@ -158,18 +145,23 @@ export function AuthProvider({ children }) {
         
         if (result.error) {
           console.error("Sign up error:", result.error);
+          
+          // Transform error for better user experience
+          if (result.error.message.includes('already registered')) {
+            result.error.message = 'This email is already registered. Please use a different email or try logging in.';
+          }
+          
           setError(result.error.message);
-          throw result.error;
         } else {
           console.log("Sign up successful:", result.data);
           
-          // For development, we'll automatically create a profile
-          if (result.data.user) {
+          // Create profile with first_name and last_name
+          if (result.data.user && data.options?.data) {
             try {
-              await profilesService.createProfile(result.data.user.id, data.options?.data || {});
+              await profilesService.createProfile(result.data.user.id, data.options.data);
+              console.log("Profile created with metadata:", data.options.data);
             } catch (profileError) {
-              console.error("Error creating profile after signup:", profileError);
-              // Don't throw here, as the signup was successful
+              console.error("Error creating profile:", profileError);
             }
           }
         }
@@ -184,10 +176,6 @@ export function AuthProvider({ children }) {
     signIn: async (data) => {
       try {
         console.log("Signing in with:", { email: data.email });
-        
-        // Clear any previous errors
-        setError(null);
-        
         const result = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password
@@ -196,18 +184,17 @@ export function AuthProvider({ children }) {
         if (result.error) {
           console.error("Sign in error:", result.error);
           setError(result.error.message);
-          throw result.error;
-        } else if (!result.data?.user) {
-          const noUserError = new Error("No user returned from authentication");
-          console.error("Sign in error:", noUserError);
-          setError(noUserError.message);
-          throw noUserError;
         } else {
           console.log("Sign in successful:", result.data.user.id);
-          setUser(result.data.user);
           
-          // Load the user profile after successful login
-          await loadUserProfile(result.data.user.id);
+          // Ensure profile is loaded after sign in
+          if (result.data.user) {
+            try {
+              await loadUserProfile(result.data.user.id);
+            } catch (profileError) {
+              console.error("Error loading profile after sign in:", profileError);
+            }
+          }
         }
         
         return result;
@@ -220,16 +207,14 @@ export function AuthProvider({ children }) {
     signOut: async () => {
       try {
         console.log("Signing out");
-        setError(null);
-        
         const result = await supabase.auth.signOut();
         
         if (result.error) {
           console.error("Sign out error:", result.error);
           setError(result.error.message);
-          throw result.error;
         } else {
           console.log("Sign out successful");
+          // Clear user and profile state
           setUser(null);
           setProfile(null);
           setIsAdmin(false);

@@ -1,36 +1,42 @@
 /*
-  # Create profiles and admin tables
+  # Add user profiles and admin functionality
 
   1. New Tables
     - `profiles`
-      - `id` (uuid, primary key)
+      - `id` (uuid, primary key, references auth.users)
       - `first_name` (text)
       - `last_name` (text)
-      - `is_admin` (boolean)
+      - `is_admin` (boolean, default false)
       - `created_at` (timestamp)
       - `updated_at` (timestamp)
+  
+  2. New Tables
     - `customers`
       - `id` (uuid, primary key)
-      - `name` (text)
+      - `name` (text, not null)
       - `contact_person` (text)
       - `email` (text)
       - `phone` (text)
       - `address` (text)
       - `created_at` (timestamp)
       - `updated_at` (timestamp)
+  
+  3. New Tables
     - `employees`
       - `id` (uuid, primary key)
-      - `first_name` (text)
-      - `last_name` (text)
+      - `first_name` (text, not null)
+      - `last_name` (text, not null)
       - `email` (text)
       - `phone` (text)
       - `position` (text)
       - `created_at` (timestamp)
       - `updated_at` (timestamp)
-  2. Security
+  
+  4. Security
     - Enable RLS on all tables
     - Add policies for authenticated users
-
+    - Add special policies for admin users
+*/
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS profiles (
@@ -70,100 +76,6 @@ CREATE TABLE IF NOT EXISTS employees (
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies if they exist to avoid the duplicate error
-DO $$ 
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'profiles' 
-    AND policyname = 'Users can read their own profile'
-  ) THEN
-    DROP POLICY "Users can read their own profile" ON profiles;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'profiles' 
-    AND policyname = 'Users can update their own profile'
-  ) THEN
-    DROP POLICY "Users can update their own profile" ON profiles;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'customers' 
-    AND policyname = 'All authenticated users can read customers'
-  ) THEN
-    DROP POLICY "All authenticated users can read customers" ON customers;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'customers' 
-    AND policyname = 'Only admins can insert customers'
-  ) THEN
-    DROP POLICY "Only admins can insert customers" ON customers;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'customers' 
-    AND policyname = 'Only admins can update customers'
-  ) THEN
-    DROP POLICY "Only admins can update customers" ON customers;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'customers' 
-    AND policyname = 'Only admins can delete customers'
-  ) THEN
-    DROP POLICY "Only admins can delete customers" ON customers;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'employees' 
-    AND policyname = 'All authenticated users can read employees'
-  ) THEN
-    DROP POLICY "All authenticated users can read employees" ON employees;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'employees' 
-    AND policyname = 'Only admins can insert employees'
-  ) THEN
-    DROP POLICY "Only admins can insert employees" ON employees;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'employees' 
-    AND policyname = 'Only admins can update employees'
-  ) THEN
-    DROP POLICY "Only admins can update employees" ON employees;
-  END IF;
-  
-  IF EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'employees' 
-    AND policyname = 'Only admins can delete employees'
-  ) THEN
-    DROP POLICY "Only admins can delete employees" ON employees;
-  END IF;
-END $$;
 
 -- Create policies for profiles table
 CREATE POLICY "Users can read their own profile"
@@ -309,16 +221,64 @@ BEGIN
   END IF;
 END $$;
 
--- Insert test users directly (simplified approach)
-INSERT INTO profiles (id, first_name, last_name, is_admin)
-VALUES 
-  ('00000000-0000-0000-0000-000000000001', 'Admin', 'User', true),
-  ('00000000-0000-0000-0000-000000000002', 'Test', 'User', false)
-ON CONFLICT (id) DO UPDATE 
-SET 
-  first_name = EXCLUDED.first_name,
-  last_name = EXCLUDED.last_name,
-  is_admin = EXCLUDED.is_admin;
-
-
-  */
+-- Create an admin user if it doesn't exist
+DO $$
+DECLARE
+  admin_exists boolean;
+BEGIN
+  SELECT EXISTS (
+    SELECT 1 FROM auth.users
+    WHERE email = 'admin@example.com'
+  ) INTO admin_exists;
+  
+  IF NOT admin_exists THEN
+    -- This is just for development purposes
+    -- In production, you would create the admin user through the Supabase dashboard
+    INSERT INTO auth.users (
+      instance_id,
+      id,
+      aud,
+      role,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      recovery_sent_at,
+      last_sign_in_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      confirmation_token,
+      email_change,
+      email_change_token_new,
+      recovery_token
+    )
+    VALUES (
+      '00000000-0000-0000-0000-000000000000',
+      gen_random_uuid(),
+      'authenticated',
+      'authenticated',
+      'admin@example.com',
+      crypt('admin123', gen_salt('bf')),
+      now(),
+      now(),
+      now(),
+      '{"provider": "email", "providers": ["email"]}',
+      '{}',
+      now(),
+      now(),
+      '',
+      '',
+      '',
+      ''
+    );
+    
+    -- Set the admin flag to true
+    UPDATE profiles
+    SET is_admin = true, first_name = 'Admin', last_name = 'User'
+    WHERE id = (
+      SELECT id FROM auth.users
+      WHERE email = 'admin@example.com'
+    );
+  END IF;
+END $$;

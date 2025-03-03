@@ -26,7 +26,11 @@ function Register() {
       setError('');
       setLoading(true);
       
-      console.log('Attempting to sign up with:', { email });
+      console.log('Attempting to sign up with:', { 
+        email, 
+        firstName, 
+        lastName 
+      });
       
       // Sign up the user with email and password
       const { data, error } = await signUp({ 
@@ -41,13 +45,19 @@ function Register() {
       });
       
       if (error) {
+        console.error('Registration error:', error);
         throw error;
       }
       
       console.log('Registration successful, navigating to login');
-      
-      // For development, we'll automatically sign in after registration
-      navigate('/dashboard');
+      // After successful registration, navigate to login page
+      setTimeout(() => {
+        navigate('/login', { 
+          state: { 
+            message: 'Registration successful! Please sign in with your credentials.' 
+          } 
+        });
+      }, 500);
     } catch (error) {
       console.error('Registration error:', error);
       setError(error.message || 'Failed to create an account.');

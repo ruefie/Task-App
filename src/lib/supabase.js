@@ -15,8 +15,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: 'taskapp-auth-storage-key' // Add a specific storage key
+    detectSessionInUrl: true
   }
 });
 
@@ -33,20 +32,13 @@ export const handleSupabaseError = (error) => {
 export const testConnection = async () => {
   try {
     console.log('Testing Supabase connection...');
+    console.log('Supabase URL:', supabaseUrl);
+    console.log('Supabase Key:', supabaseKey ? 'Provided' : 'Missing');
     
-    // First check if we can access the auth API
-    const { data: authData, error: authError } = await supabase.auth.getSession();
-    
-    if (authError) {
-      console.error('Supabase auth connection test failed:', authError);
-      return { success: false, error: authError.message };
-    }
-    
-    // Then try a simple database query
     const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
     
     if (error) {
-      console.error('Supabase database connection test failed:', error);
+      console.error('Supabase connection test failed:', error);
       return { success: false, error: error.message };
     }
     

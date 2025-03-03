@@ -30,7 +30,7 @@
   2. Security
     - Enable RLS on all tables
     - Add policies for authenticated users
-
+*/
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS profiles (
@@ -343,5 +343,3 @@ BEGIN
     ON CONFLICT DO NOTHING;
   END IF;
 END $$;
-
-*/

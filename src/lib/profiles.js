@@ -32,6 +32,19 @@ export const profilesService = {
         throw error;
       }
       
+      // If first_name and last_name are empty but metadata exists, update them
+      if ((!data.first_name || !data.last_name) && userData.user.user_metadata) {
+        const metadata = userData.user.user_metadata;
+        if (metadata.first_name || metadata.last_name) {
+          console.log('Updating profile with metadata from user:', metadata);
+          const updatedProfile = await this.updateProfile({
+            first_name: metadata.first_name || '',
+            last_name: metadata.last_name || ''
+          });
+          return updatedProfile;
+        }
+      }
+      
       return data;
     } catch (error) {
       console.error('Error in getProfile:', error);
@@ -41,26 +54,25 @@ export const profilesService = {
 
   async createProfile(userId, metadata = {}) {
     try {
-      console.log('Creating new profile for user:', userId);
+      console.log('Creating new profile for user:', userId, 'with metadata:', metadata);
       
-      // Check if profile already exists to avoid duplicates
-      const { data: existingProfile, error: checkError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
-      if (!checkError && existingProfile) {
-        console.log('Profile already exists, returning existing profile');
-        return existingProfile;
-      }
+      // Ensure we have the metadata values
+      const first_name = metadata.first_name || '';
+      const last_name = metadata.last_name || '';
+      
+      console.log('Profile data to insert:', { 
+        id: userId, 
+        first_name, 
+        last_name, 
+        is_admin: false 
+      });
       
       const { data, error } = await supabase
         .from('profiles')
         .insert([{
           id: userId,
-          first_name: metadata.first_name || '',
-          last_name: metadata.last_name || '',
+          first_name,
+          last_name,
           is_admin: false
         }])
         .select()
@@ -71,6 +83,7 @@ export const profilesService = {
         throw error;
       }
       
+      console.log('Profile created successfully:', data);
       return data;
     } catch (error) {
       console.error('Error in createProfile:', error);
@@ -92,6 +105,8 @@ export const profilesService = {
         throw new Error('User not authenticated');
       }
       
+      console.log('Updating profile for user:', userData.user.id, 'with data:', profileData);
+      
       const { data, error } = await supabase
         .from('profiles')
         .update(profileData)
@@ -102,6 +117,21 @@ export const profilesService = {
       if (error) {
         console.error('Error updating profile:', error);
         throw error;
+      }
+      
+      console.log('Profile updated successfully:', data);
+      
+      // Also update the user metadata to keep it in sync
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          first_name: profileData.first_name,
+          last_name: profileData.last_name
+        }
+      });
+      
+      if (metadataError) {
+        console.error('Error updating user metadata:', metadataError);
+        // Don't throw here, just log the error
       }
       
       return data;

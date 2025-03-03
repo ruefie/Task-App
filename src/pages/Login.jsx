@@ -35,11 +35,13 @@ function Login() {
       const { data, error } = await signIn({ email, password });
       
       if (error) {
+        console.error('Login error:', error);
         throw error;
       }
       
       console.log('Login successful, navigating to dashboard');
-      navigate('/dashboard');
+      // Force navigation to dashboard after successful login
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message || 'Failed to sign in. Please check your credentials.');
