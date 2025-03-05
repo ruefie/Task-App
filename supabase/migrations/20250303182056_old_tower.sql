@@ -28,7 +28,7 @@ BEGIN
     AND policyname = 'Users can read their own profile'
   ) THEN
     CREATE POLICY "Users can read their own profile"
-      ON profiles
+      ON public.profiles
       FOR SELECT
       TO authenticated
       USING (auth.uid() = id);
@@ -41,7 +41,7 @@ BEGIN
     AND policyname = 'Users can update their own profile'
   ) THEN
     CREATE POLICY "Users can update their own profile"
-      ON profiles
+      ON public.profiles
       FOR UPDATE
       TO authenticated
       USING (auth.uid() = id);

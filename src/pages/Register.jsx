@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { UserPlus, AlertCircle } from 'lucide-react';
@@ -12,64 +12,42 @@ function Register() {
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp, user } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      console.log("User already logged in, redirecting to dashboard");
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (password !== confirmPassword) {
       return setError('Passwords do not match');
     }
-    
     try {
       setError('');
       setLoading(true);
-      
-      console.log('Attempting to sign up with:', { 
-        email, 
-        firstName, 
-        lastName 
-      });
-      
-      // Sign up the user with email and password
-      const { data, error } = await signUp({ 
-        email, 
+      console.log('Attempting to sign up with:', { email, firstName, lastName });
+      const { data, error } = await signUp({
+        email,
         password,
         options: {
           data: {
             first_name: firstName,
-            last_name: lastName
-          }
-        }
+            last_name: lastName,
+          },
+        },
       });
-      
       if (error) {
         console.error('Registration error:', error);
         throw error;
       }
-      
       console.log('Registration successful, navigating to login');
-      // After successful registration, navigate to login page
       setTimeout(() => {
-        navigate('/login', { 
+        navigate('/login', {
           replace: true,
-          state: { 
-            message: 'Registration successful! Please sign in with your credentials.' 
-          } 
+          state: { message: 'Registration successful! Please sign in with your credentials.' },
         });
       }, 1000);
-    } catch (error) {
-      console.error('Registration error:', error);
-      setError(error.message || 'Failed to create an account.');
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError(err.message || 'Failed to create an account.');
     } finally {
       setLoading(false);
     }
@@ -88,14 +66,12 @@ function Register() {
             sign in to your existing account
           </Link>
         </p>
-        
         {error && (
           <div className={styles.error}>
             <AlertCircle size={16} style={{ marginRight: '8px' }} />
             {error}
           </div>
         )}
-        
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.nameFields}>
             <div className={styles.formGroup}>
@@ -113,7 +89,6 @@ function Register() {
                 className={styles.input}
               />
             </div>
-
             <div className={styles.formGroup}>
               <label htmlFor="lastName" className={styles.label}>
                 Last name
@@ -130,7 +105,6 @@ function Register() {
               />
             </div>
           </div>
-
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>
               Email address
@@ -146,7 +120,6 @@ function Register() {
               className={styles.input}
             />
           </div>
-
           <div className={styles.formGroup}>
             <label htmlFor="password" className={styles.label}>
               Password
@@ -162,7 +135,6 @@ function Register() {
               className={styles.input}
             />
           </div>
-
           <div className={styles.formGroup}>
             <label htmlFor="confirmPassword" className={styles.label}>
               Confirm Password
@@ -178,12 +150,7 @@ function Register() {
               className={styles.input}
             />
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={styles.button}
-          >
+          <button type="submit" disabled={loading} className={styles.button}>
             {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>

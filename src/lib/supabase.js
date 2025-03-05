@@ -13,7 +13,7 @@ if (!supabaseUrl || !supabaseKey) {
 // Create a single supabase client for interacting with your database
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: true,
+    persistSession: false,
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: 'supabase.auth.token',

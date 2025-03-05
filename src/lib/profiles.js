@@ -1,53 +1,35 @@
 import { supabase } from './supabase';
 
 export const profilesService = {
-  async getProfile() {
+  async getProfile(userId) {
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('Error getting user:', userError);
-        throw userError;
+      if (!userId) {
+        throw new Error("User ID is required");
       }
-      
-      if (!userData || !userData.user) {
-        console.error('User not authenticated');
-        throw new Error('User not authenticated');
-      }
-      
+      console.log("Getting profile for user:", userId);
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userData.user.id)
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (error) {
         // If the profile doesn't exist yet, create it
-        if (error.code === 'PGRST116') {
-          console.log('Profile not found, creating new profile');
-          return this.createProfile(userData.user.id, userData.user.user_metadata);
+        if (error.code === "PGRST116") {
+          console.log("Profile not found, creating new profile");
+          return this.createProfile(userId, {});
         }
-        
-        console.error('Error fetching profile:', error);
+        console.error("Error fetching profile:", error);
         throw error;
       }
-      
+
+      console.log("Profile found:", data);
+
       // If first_name and last_name are empty but metadata exists, update them
-      if ((!data.first_name || !data.last_name) && userData.user.user_metadata) {
-        const metadata = userData.user.user_metadata;
-        if (metadata.first_name || metadata.last_name) {
-          console.log('Updating profile with metadata from user:', metadata);
-          const updatedProfile = await this.updateProfile({
-            first_name: metadata.first_name || '',
-            last_name: metadata.last_name || ''
-          });
-          return updatedProfile;
-        }
-      }
-      
+      // (You can adjust this logic if needed.)
       return data;
     } catch (error) {
-      console.error('Error in getProfile:', error);
+      console.error("Error in getProfile:", error);
       throw error;
     }
   },

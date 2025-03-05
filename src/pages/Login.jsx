@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,62 +16,38 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect if already logged in
+  // If coming from registration, do not auto redirect (we assume signOut already happened)
   useEffect(() => {
-    if (user) {
+    if (location.state?.registrationSuccess) {
+      // Clear the flag after use.
+      window.history.replaceState({}, document.title);
+    } else if (user) {
       console.log("User already logged in, redirecting to dashboard");
       navigate('/dashboard');
     }
-  }, [user, navigate]);
-
-  // Check for success message from registration
-  useEffect(() => {
-    if (location.state?.message) {
-      setSuccess(location.state.message);
-      // Clear the state to prevent showing the message on refresh
-      window.history.replaceState({}, document.title);
-    }
-  }, [location]);
+  }, [user, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       setError('');
       setLoading(true);
-      
       console.log('Attempting to sign in with:', { email });
       const { data, error } = await signIn({ email, password });
-      
       if (error) {
         console.error('Login error:', error);
         throw error;
       }
-      
       console.log('Login successful, navigating to dashboard');
-      
-      // Use a small delay before redirecting
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
       }, 500);
-    } catch (error) {
-      console.error('Login error:', error);
-      setError(error.message || 'Failed to sign in. Please check your credentials.');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAdminLogin = () => {
-    setEmail('admin@example.com');
-    setPassword('admin123');
-    setIsAdmin(true);
-  };
-
-  const handleUserLogin = () => {
-    setEmail('test@example.com');
-    setPassword('password123');
-    setIsAdmin(false);
   };
 
   return (
@@ -92,21 +69,18 @@ function Login() {
             create a new account
           </Link>
         </p>
-        
         {success && (
           <div className={styles.success}>
             <CheckCircle size={16} style={{ marginRight: '8px' }} />
             {success}
           </div>
         )}
-        
         {error && (
           <div className={styles.error}>
             <AlertCircle size={16} style={{ marginRight: '8px' }} />
             {error}
           </div>
         )}
-        
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>
@@ -123,7 +97,6 @@ function Login() {
               className={styles.input}
             />
           </div>
-
           <div className={styles.formGroup}>
             <label htmlFor="password" className={styles.label}>
               Password
@@ -139,38 +112,10 @@ function Login() {
               className={styles.input}
             />
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`${styles.button} ${isAdmin ? styles.adminButton : ''}`}
-          >
+          <button type="submit" disabled={loading} className={`${styles.button} ${isAdmin ? styles.adminButton : ''}`}>
             {loading ? 'Signing in...' : (isAdmin ? 'Sign in as Admin' : 'Sign in')}
           </button>
         </form>
-
-        <div className={styles.divider}>
-          <span>For development</span>
-        </div>
-
-        <div className={styles.devButtons}>
-          <button
-            type="button"
-            onClick={handleUserLogin}
-            className={styles.devButton}
-          >
-            <LogIn className={styles.buttonIcon} />
-            Use regular account
-          </button>
-          <button
-            type="button"
-            onClick={handleAdminLogin}
-            className={styles.devButton}
-          >
-            <Shield className={styles.buttonIcon} />
-            Use admin account
-          </button>
-        </div>
       </div>
     </div>
   );
