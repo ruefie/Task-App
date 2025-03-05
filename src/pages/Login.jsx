@@ -27,7 +27,13 @@ function Login() {
     }
   }, [user, navigate, location.state]);
 
-  const handleSubmit = async (e) => {
+  const toggleLoginType = () => {
+    setIsAdmin(!isAdmin);
+    setEmail(isAdmin ? '' : 'admin@example.com');
+    setPassword(isAdmin ? '' : 'adminpass');
+  };
+
+  const handleSubmit = async (e) => { 
     e.preventDefault();
     try {
       setError('');
@@ -41,7 +47,7 @@ function Login() {
       console.log('Login successful, navigating to dashboard');
       setTimeout(() => {
         navigate('/dashboard', { replace: true });
-      }, 500);
+      }, 200);
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to sign in. Please check your credentials.');
@@ -81,6 +87,25 @@ function Login() {
             {error}
           </div>
         )}
+  <div className={styles.loginTypeToggle}>
+          <button
+            type="button"
+            onClick={toggleLoginType}
+            className={`${styles.loginTypeButton} ${isAdmin ? styles.active + ' ' + styles.admin : ''}`}
+          >
+            <Shield size={16} style={{ marginRight: '4px' }} />
+            Admin
+          </button>
+          <button
+            type="button"
+            onClick={toggleLoginType}
+            className={`${styles.loginTypeButton} ${!isAdmin ? styles.active : ''}`}
+          >
+            <LogIn size={16} style={{ marginRight: '4px' }} />
+            User
+          </button>
+        </div>
+
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>
