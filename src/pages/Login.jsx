@@ -35,8 +35,8 @@ function Login() {
 
   const toggleLoginType = () => {
     setIsAdmin(!isAdmin);
-    setEmail(isAdmin ? '' : 'admin@example.com');
-    setPassword(isAdmin ? '' : 'adminpass');
+    setEmail(isAdmin ? '' : '');
+    setPassword(isAdmin ? '' : '');
   };
 
   const handleSubmit = async (e) => { 

@@ -193,6 +193,11 @@ function AdminPanel() {
         await adminService.createEmployee(employeeFormData);
         setSuccess('Employee created successfully');
       }
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
       
       resetForms();
       loadData();
@@ -215,6 +220,10 @@ function AdminPanel() {
         await adminService.createCustomer(customerFormData);
         setSuccess('Customer created successfully');
       }
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
       
       resetForms();
       loadData();
@@ -257,6 +266,10 @@ function AdminPanel() {
     try {
       await adminService.deleteEmployee(id);
       setSuccess('Employee deleted successfully');
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
       loadData();
     } catch (error) {
       console.error('Error deleting employee:', error);
@@ -273,6 +286,10 @@ function AdminPanel() {
     try {
       await adminService.deleteCustomer(id);
       setSuccess('Customer deleted successfully');
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
       loadData();
     } catch (error) {
       console.error('Error deleting customer:', error);
