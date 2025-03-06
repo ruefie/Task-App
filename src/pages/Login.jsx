@@ -16,16 +16,22 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // If coming from registration, do not auto redirect (we assume signOut already happened)
+  // New useEffect to capture a success message from location.state
   useEffect(() => {
-    if (location.state?.registrationSuccess) {
-      // Clear the flag after use.
+    if (location.state?.message) {
+      setSuccess(location.state.message);
+      // Clear the state so it doesn’t show repeatedly
       window.history.replaceState({}, document.title);
-    } else if (user) {
-      console.log("User already logged in, redirecting to dashboard");
-      navigate('/dashboard');
     }
-  }, [user, navigate, location.state]);
+  }, [location.state]);
+
+  // Optionally, if you want to auto redirect when a user is already logged in (commented out if causing issues)
+  // useEffect(() => {
+  //   if (user) {
+  //     console.log("User already logged in, redirecting to dashboard");
+  //     navigate('/dashboard');
+  //   }
+  // }, [user, navigate]);
 
   const toggleLoginType = () => {
     setIsAdmin(!isAdmin);
@@ -87,7 +93,7 @@ function Login() {
             {error}
           </div>
         )}
-  <div className={styles.loginTypeToggle}>
+        <div className={styles.loginTypeToggle}>
           <button
             type="button"
             onClick={toggleLoginType}
@@ -105,7 +111,6 @@ function Login() {
             User
           </button>
         </div>
-
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>

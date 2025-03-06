@@ -33,8 +33,8 @@ export function AuthProvider({ children }) {
       console.log("Profile data loaded:", profileData);
       if (profileData) {
         setProfile(profileData);
-        // Important fix: ensure isAdmin is properly set as a boolean
-        setIsAdmin(Boolean(profileData.is_admin));  
+        // Ensure isAdmin is set as a boolean
+        setIsAdmin(Boolean(profileData.is_admin));
         console.log("Profile set, isAdmin:", Boolean(profileData.is_admin));
       } else {
         console.log("No profile data returned");
@@ -140,25 +140,39 @@ export function AuthProvider({ children }) {
           console.log("Sign up successful:", result.data);
           if (result.data.user && data.options?.data) {
             try {
-              await profilesService.createProfile(result.data.user.id, data.options.data);
-              console.log("Profile created with metadata:", data.options.data);
+              // First, try to get the profile for the user
+              let profileData;
+              try {
+                profileData = await profilesService.getProfile(result.data.user.id);
+              } catch (getError) {
+                // If no profile is found, we'll assume it doesn't exist
+                profileData = null;
+              }
+              if (profileData) {
+                // If a profile exists, update it with the new metadata
+                console.log("Profile already exists, updating metadata");
+                await profilesService.updateProfile({
+                  first_name: data.options.data.first_name,
+                  last_name: data.options.data.last_name,
+                });
+              } else {
+                // If no profile exists, create one
+                await profilesService.createProfile(result.data.user.id, data.options.data);
+                console.log("Profile created with metadata:", data.options.data);
+              }
             } catch (profileError) {
-              console.error("Error creating profile:", profileError);
+              console.error("Error in profile creation/updating:", profileError);
+              // Optionally, setError(profileError.message);
             }
           }
-          // Wait a short period before signing out to let the auto-login event settle.
-          // setTimeout(async () => {
-          //   const { error: signOutError } = await supabase.auth.signOut();
-          //   if (signOutError) {
-          //     console.error("Error during sign out after registration:", signOutError);
-          //   } else {
-          //     console.log("User signed out after registration.");
-          //     localStorage.removeItem('supabase.auth.token'); // Clear local token
-          //     setUser(null);
-          //     // Force a full reload so the app starts fresh (optional, but reliable)
-          //     window.location.href = '/login';
-          //   }
-          // }, 500);
+          // Force sign out after registration so the user is not auto-logged in.
+          const { error: signOutError } = await supabase.auth.signOut();
+          if (signOutError) {
+            console.error("Error during sign out after registration:", signOutError);
+          } else {
+            console.log("User signed out after registration.");
+            setUser(null);
+          }
         }
         return result;
       } catch (err) {
@@ -236,3 +250,5 @@ export function AuthProvider({ children }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+// export const useAuth = () => useContext(AuthContext);
