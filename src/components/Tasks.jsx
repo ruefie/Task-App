@@ -189,26 +189,38 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       }
     } else {
       try {
+        // Find the active timer entry (one without an end_time)
         const activeEntry = task.timerEntries.find(entry => !entry.end_time);
         if (activeEntry) {
+          // Calculate the duration since the timer started
           const duration = Math.floor((new Date() - new Date(activeEntry.start_time)) / 1000);
-          await tasksService.stopTimer(activeEntry.id, duration);
+          // Stop the timer on the server and get the updated entry (which should include end_time and duration)
+          const stoppedEntry = await tasksService.stopTimer(activeEntry.id, duration);
+          
+          // Update the task's timerEntries in local state with the stopped entry
+          setTasks(prevTasks => 
+            prevTasks.map(t => 
+              t.id === taskId 
+                ? {
+                    ...t,
+                    isTimerRunning: false,
+                    timerEntries: t.timerEntries.map(entry => 
+                      entry.id === activeEntry.id
+                        ? { ...entry, end_time: stoppedEntry.end_time, duration: stoppedEntry.duration }
+                        : entry
+                    )
+                  }
+                : t
+            )
+          );
         }
-
+        // Clear the running interval
         clearInterval(timers[taskId]);
         setTimers(prev => {
           const newTimers = { ...prev };
           delete newTimers[taskId];
           return newTimers;
         });
-
-        setTasks(prevTasks => 
-          prevTasks.map(t => 
-            t.id === taskId 
-              ? { ...t, isTimerRunning: false }
-              : t
-          )
-        );
       } catch (error) {
         console.error('Error stopping timer:', error);
         setError('Failed to stop timer. Please try again.');
