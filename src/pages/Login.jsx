@@ -8,55 +8,65 @@ import styles from '../styles/Login.module.scss';
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const { signIn, user } = useAuth();
+  // Local toggle for Admin Login mode
+  const [isAdminToggle, setIsAdminToggle] = useState(false);
+
+  // Destructure signIn, signOut, user, profile from AuthContext.
+  const { signIn, signOut, user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // New useEffect to capture a success message from location.state
+  // Capture and display any success message from location.state.
   useEffect(() => {
     if (location.state?.message) {
       setSuccess(location.state.message);
-      // Clear the state so it doesn’t show repeatedly
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
-  // Optionally, if you want to auto redirect when a user is already logged in (commented out if causing issues)
-  // useEffect(() => {
-  //   if (user) {
-  //     console.log("User already logged in, redirecting to dashboard");
-  //     navigate('/dashboard');
-  //   }
-  // }, [user, navigate]);
+  // This useEffect monitors when user and profile are loaded, then navigates accordingly.
+  useEffect(() => {
+    // Only run if we have a user and profile loaded
+    if (user && profile) {
+      if (isAdminToggle) {
+        // If admin mode is toggled, but the profile does not indicate admin rights:
+        if (profile.is_admin !== true) {
+          setLocalError("Access Denied: This account does not have admin privileges.");
+          // Sign out the user and clear the fields
+          signOut();
+          return;
+        }
+      }
+      // If everything is in order, navigate to dashboard.
+      navigate('/dashboard', { replace: true });
+    }
+    // We want this effect to run whenever user, profile, or isAdminToggle changes.
+  }, [user, profile, isAdminToggle, signOut, navigate]);
 
+  // Toggle between admin and user login modes.
   const toggleLoginType = () => {
-    setIsAdmin(!isAdmin);
-    setEmail(isAdmin ? '' : '');
-    setPassword(isAdmin ? '' : '');
+    setIsAdminToggle((prev) => !prev);
+    setEmail('');
+    setPassword('');
   };
 
-  const handleSubmit = async (e) => { 
+  // handleSubmit only calls signIn; navigation is handled in useEffect.
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      setError('');
+      setLocalError('');
       setLoading(true);
       console.log('Attempting to sign in with:', { email });
       const { data, error } = await signIn({ email, password });
-      if (error) {
-        console.error('Login error:', error);
-        throw error;
-      }
-      console.log('Login successful, navigating to dashboard');
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 200);
+      if (error) throw error;
+      console.log('Sign in process initiated.');
+      // Note: Do not navigate here—useEffect will take care of it once user/profile are set.
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to sign in. Please check your credentials.');
+      setLocalError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -66,14 +76,14 @@ function Login() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          {isAdmin ? (
+          {isAdminToggle ? (
             <Shield className={styles.icon} />
           ) : (
             <LogIn className={styles.icon} />
           )}
         </div>
         <h2 className={styles.title}>
-          {isAdmin ? 'Admin Login' : 'Sign in to your account'}
+          {isAdminToggle ? 'Admin Login' : 'Sign in to your account'}
         </h2>
         <p className={styles.subtitle}>
           Or{' '}
@@ -87,17 +97,17 @@ function Login() {
             {success}
           </div>
         )}
-        {error && (
+        {localError && (
           <div className={styles.error}>
             <AlertCircle size={16} style={{ marginRight: '8px' }} />
-            {error}
+            {localError}
           </div>
         )}
         <div className={styles.loginTypeToggle}>
           <button
             type="button"
             onClick={toggleLoginType}
-            className={`${styles.loginTypeButton} ${isAdmin ? styles.active + ' ' + styles.admin : ''}`}
+            className={`${styles.loginTypeButton} ${isAdminToggle ? styles.active + ' ' + styles.admin : ''}`}
           >
             <Shield size={16} style={{ marginRight: '4px' }} />
             Admin
@@ -105,7 +115,7 @@ function Login() {
           <button
             type="button"
             onClick={toggleLoginType}
-            className={`${styles.loginTypeButton} ${!isAdmin ? styles.active : ''}`}
+            className={`${styles.loginTypeButton} ${!isAdminToggle ? styles.active : ''}`}
           >
             <LogIn size={16} style={{ marginRight: '4px' }} />
             User
@@ -142,8 +152,12 @@ function Login() {
               className={styles.input}
             />
           </div>
-          <button type="submit" disabled={loading} className={`${styles.button} ${isAdmin ? styles.adminButton : ''}`}>
-            {loading ? 'Signing in...' : (isAdmin ? 'Sign in as Admin' : 'Sign in')}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`${styles.button} ${isAdminToggle ? styles.adminButton : ''}`}
+          >
+            {loading ? 'Signing in...' : (isAdminToggle ? 'Sign in as Admin' : 'Sign in')}
           </button>
         </form>
       </div>

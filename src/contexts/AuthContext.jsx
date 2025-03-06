@@ -33,7 +33,6 @@ export function AuthProvider({ children }) {
       console.log("Profile data loaded:", profileData);
       if (profileData) {
         setProfile(profileData);
-        // Ensure isAdmin is set as a boolean
         setIsAdmin(Boolean(profileData.is_admin));
         console.log("Profile set, isAdmin:", Boolean(profileData.is_admin));
       } else {
@@ -46,6 +45,7 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     let isMounted = true;
