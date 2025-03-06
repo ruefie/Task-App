@@ -33,8 +33,9 @@ export function AuthProvider({ children }) {
       console.log("Profile data loaded:", profileData);
       if (profileData) {
         setProfile(profileData);
-        setIsAdmin(profileData.is_admin || false);
-        console.log("Profile set, isAdmin:", profileData.is_admin);
+        // Important fix: ensure isAdmin is properly set as a boolean
+        setIsAdmin(Boolean(profileData.is_admin));  
+        console.log("Profile set, isAdmin:", Boolean(profileData.is_admin));
       } else {
         console.log("No profile data returned");
       }

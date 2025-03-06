@@ -13,6 +13,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import styles from '../styles/AdminPanel.module.scss';
+import { useAuth } from '../contexts/AuthContext';
 
 function AdminPanel() {
   const [activeTab, setActiveTab] = useState('employees');
@@ -46,6 +47,40 @@ function AdminPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState('');
   const [sortDirection, setSortDirection] = useState('asc');
+
+
+  const { isAdmin } = useAuth();
+  const [adminState, setAdminState] = useState({
+    isAdmin,
+    loading: true,
+    error: null
+  });
+
+  useEffect(() => {
+    // This helps debug why admin panel might not be showing
+    console.log("AdminPanel component mounted");
+    console.log("isAdmin status:", isAdmin);
+    
+    setAdminState({
+      isAdmin,
+      loading: false,
+      error: null
+    });
+  }, [isAdmin]);
+
+  if (!isAdmin) {
+    return (
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center' 
+      }}>
+        <h2>Access Denied</h2>
+        <p>You don't have permission to access the admin panel.</p>
+        <p>isAdmin value: {String(isAdmin)}</p>
+        <p>If you believe this is an error, please contact support.</p>
+      </div>
+    );
+  }
 
   useEffect(() => {
     loadData();

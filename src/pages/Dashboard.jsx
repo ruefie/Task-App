@@ -192,10 +192,12 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Debug logging for admin status
   useEffect(() => {
-    console.log("Dashboard mounted, loading tasks");
+    console.log("Dashboard mounted, isAdmin:", isAdmin);
+    console.log("User profile:", profile);
     loadTasks();
-  }, []);
+  }, [isAdmin, profile]);
 
   const loadTasks = async () => {
     try {
@@ -291,7 +293,7 @@ function Dashboard() {
                     <Shield className={styles.navIcon} />
                     Admin Panel
                   </Link>
-                )}
+                )} 
               </div>
             </nav>
           </div>
@@ -361,6 +363,7 @@ function Dashboard() {
                     <Link
                       to="/dashboard/admin"
                       className={`${styles.navItem} ${styles.desktop} ${isActiveRoute('/dashboard/admin') ? styles.active : ''}`}
+                      // onClick={() => setSidebarOpen(false)}
                     >
                       <Shield className={styles.navIcon} />
                       Admin Panel
