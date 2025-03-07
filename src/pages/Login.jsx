@@ -109,7 +109,7 @@ function Login() {
             onClick={toggleLoginType}
             className={`${styles.loginTypeButton} ${isAdminToggle ? styles.active + ' ' + styles.admin : ''}`}
           >
-            <Shield size={16} style={{ marginRight: '4px' }} />
+            <Shield />
             Admin
           </button>
           <button
@@ -117,7 +117,7 @@ function Login() {
             onClick={toggleLoginType}
             className={`${styles.loginTypeButton} ${!isAdminToggle ? styles.active : ''}`}
           >
-            <LogIn size={16} style={{ marginRight: '4px' }} />
+            <LogIn />
             User
           </button>
         </div>

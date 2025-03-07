@@ -39,6 +39,9 @@ function Profile() {
       });
       
       setSuccess('Profile updated successfully');
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
       setIsEditing(false);
     } catch (error) {
       setError('Failed to update profile: ' + error.message);
@@ -63,6 +66,9 @@ function Profile() {
       await profilesService.updatePassword(currentPassword, newPassword);
       
       setSuccess('Password updated successfully');
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
       setIsChangingPassword(false);
       setCurrentPassword('');
       setNewPassword('');
