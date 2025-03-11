@@ -1,11 +1,11 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  Calendar as CalendarIcon, 
-  CheckSquare, 
-  LogOut, 
-  Menu, 
+import {
+  Calendar as CalendarIcon,
+  CheckSquare,
+  LogOut,
+  Menu,
   X,
   User,
   Home as HomeIcon,
@@ -22,52 +22,21 @@ const Tasks = lazy(() => import('../components/Tasks.jsx'));
 const Profile = lazy(() => import('../components/Profile.jsx'));
 const AdminPanel = lazy(() => import('../components/AdminPanel.jsx'));
 
-// Loading component
+// Loading component using CSS classes
 const LoadingComponent = () => (
-  <div style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: '2rem' 
-  }}>
+  <div className={styles.loadingContainer}>
     <div>
-      <p style={{ marginBottom: '10px' }}>Loading...</p>
-      <div style={{ 
-        width: '50px', 
-        height: '6px', 
-        backgroundColor: '#e5e7eb',
-        borderRadius: '3px',
-        overflow: 'hidden',
-        position: 'relative'
-      }}>
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          height: '100%',
-          width: '50%',
-          backgroundColor: '#2563eb',
-          borderRadius: '3px',
-          animation: 'loading 1.5s infinite ease-in-out'
-        }}></div>
+      <p className={styles.loadingText}>Loading...</p>
+      <div className={styles.loadingBar}>
+        <div className={styles.loadingFill}></div>
       </div>
     </div>
   </div>
 );
 
-// Error component
+// Error component using CSS classes
 const ErrorComponent = ({ message }) => (
-  <div style={{ 
-    padding: '1rem', 
-    margin: '1rem', 
-    backgroundColor: '#fff5f5', 
-    borderRadius: '0.375rem',
-    border: '1px solid #f56565',
-    color: '#c53030',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  }}>
+  <div className={styles.errorComponent}>
     <AlertCircle size={20} />
     <span>{message || 'An error occurred. Please try again.'}</span>
   </div>
@@ -75,7 +44,7 @@ const ErrorComponent = ({ message }) => (
 
 // Home component (directly defined here to avoid import issues)
 const Home = () => {
-  const { user } = useAuth();
+  const { user ,profile} = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,33 +69,27 @@ const Home = () => {
   }, []);
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>Welcome back!</h1>
-      <p style={{ marginBottom: '1rem', color: '#6b7280' }}>{user?.email}</p>
+    <div className={styles.homeContainer}>
+      <div className={styles.homeHeader}>
+      <h1 className={styles.homeTitle}>Welcome back!</h1>
+      <p className={styles.homeUserEmail}>{profile?.first_name}</p>
+      </div>
       
       {error && <ErrorComponent message={error} />}
       
       {loading ? (
-        <p>Loading your tasks...</p>
+        <p className={styles.homeLoading}>Loading your tasks...</p>
       ) : (
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-          gap: '1rem' 
-        }}>
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '0.5rem', 
-            padding: '1rem',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Task Overview</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className={styles.homeGrid}>
+          {/* Task Overview Card */}
+          <div className={styles.overviewCard}>
+            <h2 className={styles.overviewTitle}>Task Overview</h2>
+            <div className={styles.overviewBody}>
+              <div className={styles.overviewRow}>
                 <CheckSquare size={20} />
                 <div>
-                  <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Tasks</h3>
-                  <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                  <h3 className={styles.overviewRowTitle}>Tasks</h3>
+                  <p className={styles.overviewRowStats}>
                     {tasks.filter(t => t.completed).length} / {tasks.length} completed
                   </p>
                 </div>
@@ -134,42 +97,25 @@ const Home = () => {
             </div>
           </div>
           
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '0.5rem', 
-            padding: '1rem',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Recent Tasks</h2>
+          {/* Recent Tasks Card */}
+          <div className={styles.recentCard}>
+            <h2 className={styles.recentTitle}>Recent Tasks</h2>
             {tasks.length === 0 ? (
-              <p>No tasks yet. Add some tasks to get started!</p>
+              <p className={styles.noTasks}>No tasks yet. Add some tasks to get started!</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div className={styles.recentList}>
                 {tasks.slice(0, 5).map(task => (
-                  <div key={task.id} style={{ 
-                    padding: '0.75rem', 
-                    backgroundColor: '#f3f4f6', 
-                    borderRadius: '0.375rem',
-                    borderLeft: '4px solid #2563eb'
-                  }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      marginBottom: '0.25rem'
-                    }}>
-                      <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>{task.name}</h3>
-                      <span style={{ 
-                        fontSize: '0.75rem', 
-                        padding: '0.125rem 0.5rem', 
-                        backgroundColor: '#dbeafe', 
-                        color: '#1e40af',
-                        borderRadius: '9999px'
-                      }}>
-                        {task.priority || 'Normal'}
-                      </span>
+                  <div
+                    key={task.id}
+                    className={`${styles.recentItem} ${styles[task.priority?.toLowerCase() || 'normal']}`}
+                  >
+                    <div className={styles.recentHeader}>
+                      <h3 className={styles.recentTaskName}>{task.name}</h3>
+                      <span className={`${styles.recentPriority} ${styles[task.priority?.toLowerCase() || 'normal']}`}>
+              {task.priority || 'Normal'}
+            </span>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    <div className={styles.recentInfo}>
                       {task.project || 'No project'} • Due: {task.due_date || 'Not set'}
                     </div>
                   </div>
@@ -192,7 +138,6 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Debug logging for admin status
   useEffect(() => {
     console.log("Dashboard mounted, isAdmin:", isAdmin);
     console.log("User profile:", profile);
@@ -226,7 +171,6 @@ function Dashboard() {
     }
   };
 
-  // Determine active route for navigation highlighting
   const isActiveRoute = (path) => {
     if (path === '/dashboard' && location.pathname === '/dashboard') {
       return true;
@@ -242,7 +186,7 @@ function Dashboard() {
         <div className={styles.mobileSidebar}>
           <div className={styles.mobileCloseButton}>
             <button onClick={() => setSidebarOpen(false)}>
-              <span className="sr-only">Close sidebar</span>
+              <span className={styles.srOnly}>Close sidebar</span>
               <X className={styles.closeIcon} />
             </button>
           </div>
@@ -293,7 +237,7 @@ function Dashboard() {
                     <Shield className={styles.navIcon} />
                     Admin Panel
                   </Link>
-                )} 
+                )}
               </div>
             </nav>
           </div>
@@ -363,7 +307,6 @@ function Dashboard() {
                     <Link
                       to="/dashboard/admin"
                       className={`${styles.navItem} ${styles.desktop} ${isActiveRoute('/dashboard/admin') ? styles.active : ''}`}
-                      // onClick={() => setSidebarOpen(false)}
                     >
                       <Shield className={styles.navIcon} />
                       Admin Panel
@@ -403,7 +346,7 @@ function Dashboard() {
             className={styles.menuButton}
             onClick={() => setSidebarOpen(true)}
           >
-            <span className="sr-only">Open sidebar</span>
+            <span className={styles.srOnly}>Open sidebar</span>
             <Menu className={styles.menuIcon} />
           </button>
         </div>
@@ -421,26 +364,18 @@ function Dashboard() {
                   {isAdmin && (
                     <Route path="/admin" element={<AdminPanel />} />
                   )}
-                  <Route path="*" element={
-                    <div style={{ textAlign: 'center', padding: '2rem' }}>
-                      <h2>Page Not Found</h2>
-                      <p>The page you're looking for doesn't exist.</p>
-                      <Link 
-                        to="/dashboard"
-                        style={{
-                          display: 'inline-block',
-                          marginTop: '1rem',
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#2563eb',
-                          color: 'white',
-                          borderRadius: '0.25rem',
-                          textDecoration: 'none'
-                        }}
-                      >
-                        Go to Dashboard
-                      </Link>
-                    </div>
-                  } />
+                  <Route
+                    path="*"
+                    element={
+                      <div className={styles.pageNotFound}>
+                        <h2>Page Not Found</h2>
+                        <p>The page you're looking for doesn't exist.</p>
+                        <Link to="/dashboard" className={styles.goHome}>
+                          Go to Dashboard
+                        </Link>
+                      </div>
+                    }
+                  />
                 </Routes>
               </Suspense>
             </div>
