@@ -580,10 +580,21 @@ $warning-color: #f59e0b;
           }
         }
       }
+
+      .sessionInfo{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        span {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: $text-color;
+        }
+      }
       
       .timerEntries {
-        margin-top: 0.5rem;
-        
+       
         h5 {
           font-size: 0.75rem;
           font-weight: 600;
@@ -736,16 +747,19 @@ $warning-color: #f59e0b;
 }
 
 .viewTabButton {
+  display: flex;
+  align-items: center;
   padding: 0.5rem 1rem;
   background-color: $hover-bg;
   border: 1px solid $border-color;
   border-radius: 0.375rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
   
   &:hover {
     background-color: color.adjust($hover-bg, $lightness: -5%);
+    color: $text-color;
   }
 }
 
@@ -755,9 +769,7 @@ $warning-color: #f59e0b;
   border-color: $primary-color;
 }
 
-/* ------------------------------ */
-/* View Tabs for Tasks View Toggle */
-/* ------------------------------ */
+
 .viewTabs {
   display: flex;
   justify-content: center;
@@ -765,30 +777,9 @@ $warning-color: #f59e0b;
   margin-bottom: 1rem;
 }
 
-.viewTabButton {
-  padding: 0.5rem 1rem;
-  background-color: $hover-bg;
-  border: 1px solid $border-color;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  color: $text-color;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
 
-  &:hover {
-    background-color: color.adjust($hover-bg, $lightness: -5%);
-  }
-}
 
-.activeView {
-  background-color: $primary-color;
-  border-color: $primary-color;
-  color: $white;
-}
 
-/* ------------------------------ */
-/* List View Styles for Tasks     */
-/* ------------------------------ */
 .listView {
   padding: 1rem;
 }
@@ -834,6 +825,11 @@ $warning-color: #f59e0b;
   align-items: center;
   margin-bottom: 0.5rem;
 }
+.milestone{
+  font-size: 1rem;
+  font-weight: 600;
+  color: $text-color;
+}
 
 .listItemContent {
   display: flex;
@@ -841,9 +837,7 @@ $warning-color: #f59e0b;
   gap: 0.5rem;
 }
 
-/* ------------------------------ */
-/* Priority Tag Styling (Reused)  */
-/* ------------------------------ */
+
 .tags {
   display: flex;
   gap: 0.5rem;
@@ -871,5 +865,100 @@ $warning-color: #f59e0b;
 .tag.urgent {
   background-color: color.adjust($error-color, $lightness: 20%);
   color: color.adjust($error-color, $lightness: -20%);
+}
+
+// Modal overlay styles
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+// Modal content styles
+.modalContent {
+  background-color: $white;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  animation: slideDown 0.3s forwards;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modalCloseButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: $text-color;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: $primary-color;
+  }
+}
+
+// Task details within the modal
+.taskDetails {
+  h2 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+  
+  p {
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    color: $text-color;
+  }
+  
+  h4 {
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: $text-color;
+  }
+  
+  .attachmentGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    
+    a {
+      padding: 0.25rem 0.5rem;
+      background-color: $hover-bg;
+      border-radius: 0.25rem;
+      text-decoration: none;
+      color: $primary-color;
+      transition: background-color 0.2s;
+      
+      &:hover {
+        background-color: color.adjust($hover-bg, $lightness: -5%);
+      }
+    }
+  }
 }
 
