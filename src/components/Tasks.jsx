@@ -47,7 +47,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [taskToReset, setTaskToReset] = useState(null);
   const [viewMode, setViewMode] = useState("kanban"); // "kanban" or "list"
-  const [selectedTask, setSelectedTask] = useState(null); // For detail modal
+  const [selectedTask, setSelectedTask] = useState(null); // For details modal
 
   const fileInputRef = useRef(null);
   const [timers, setTimers] = useState({});
@@ -85,6 +85,8 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           isTimerRunning: hasActiveTimer(task.timer_entries || []),
           attachments: task.task_attachments || [],
           timerEntries: task.timer_entries || [],
+          // Optionally, initialize prevMilestone (if not done already)
+          prevMilestone: task.milestone !== "Done" ? task.milestone : null,
         }))
       );
     } catch (error) {
@@ -98,16 +100,9 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     return timerEntries.reduce((total, entry) => {
       if (entry.duration) return total + entry.duration;
       if (entry.end_time)
-        return (
-          total +
-          Math.floor(
-            (new Date(entry.end_time) - new Date(entry.start_time)) / 1000
-          )
-        );
+        return total + Math.floor((new Date(entry.end_time) - new Date(entry.start_time)) / 1000);
       if (!entry.end_time)
-        return (
-          total + Math.floor((new Date() - new Date(entry.start_time)) / 1000)
-        );
+        return total + Math.floor((new Date() - new Date(entry.start_time)) / 1000);
       return total;
     }, 0);
   };
@@ -135,29 +130,17 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       url: URL.createObjectURL(file),
     }));
     if (editingTask) {
-      setEditingTask((prev) => ({
-        ...prev,
-        attachments: [...prev.attachments, ...fileDetails],
-      }));
+      setEditingTask((prev) => ({ ...prev, attachments: [...prev.attachments, ...fileDetails] }));
     } else {
-      setNewTask((prev) => ({
-        ...prev,
-        attachments: [...prev.attachments, ...fileDetails],
-      }));
+      setNewTask((prev) => ({ ...prev, attachments: [...prev.attachments, ...fileDetails] }));
     }
   };
 
   const removeAttachment = (index) => {
     if (editingTask) {
-      setEditingTask((prev) => ({
-        ...prev,
-        attachments: prev.attachments.filter((_, i) => i !== index),
-      }));
+      setEditingTask((prev) => ({ ...prev, attachments: prev.attachments.filter((_, i) => i !== index) }));
     } else {
-      setNewTask((prev) => ({
-        ...prev,
-        attachments: prev.attachments.filter((_, i) => i !== index),
-      }));
+      setNewTask((prev) => ({ ...prev, attachments: prev.attachments.filter((_, i) => i !== index) }));
     }
   };
 
@@ -168,13 +151,14 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // When a task (non-button area) is clicked, show details modal
+  // When a task (non-interactive area) is clicked, show the details modal
   const handleTaskClick = (task, e) => {
-    // Prevent if click comes from an interactive element (like buttons)
+    // Prevent if the click comes from a button
     if (e.target.closest("button")) return;
     setSelectedTask(task);
   };
 
+  // handleDragEnd function (for Kanban view)
   const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
     if (
@@ -199,8 +183,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       movedTask.completed = false;
     }
     newTasks.splice(
-      newTasks.findIndex((t) => t.milestone === newMilestone) +
-        destination.index,
+      newTasks.findIndex((t) => t.milestone === newMilestone) + destination.index,
       0,
       movedTask
     );
@@ -217,7 +200,60 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     }
   };
 
-  // Timer functions
+  // Updated toggleTask function with previous milestone logic:
+  const toggleTask = async (id) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    try {
+      setError(null);
+      const newCompleted = !task.completed;
+      let updatedData = { completed: newCompleted };
+  
+      if (newCompleted) {
+        // When marking complete, if not already "Done", store current milestone locally and set milestone to "Done"
+        if (task.milestone !== "Done") {
+          updatedData.milestone = "Done";
+          // Save previous milestone locally (client-only; not sent to server)
+          task._prevMilestone = task.milestone;
+        }
+      } else {
+        // When un-checking, revert to the locally stored previous milestone (if exists)
+        updatedData.milestone = task._prevMilestone ? task._prevMilestone : task.milestone;
+        // Remove the temporary property
+        delete task._prevMilestone;
+      }
+      // Update the task on the server without sending the temporary property
+      await tasksService.updateTask(id, updatedData);
+      // Update local state
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...updatedData } : t))
+      );
+    } catch (error) {
+      console.error("Error updating task:", error);
+      setError("Failed to update task status. Please try again.");
+    }
+  };
+
+  const deleteTask = async (id) => {
+    try {
+      setError(null);
+      await tasksService.deleteTask(id);
+      if (timers[id]) {
+        clearInterval(timers[id]);
+        setTimers((prev) => {
+          const newTimers = { ...prev };
+          delete newTimers[id];
+          return newTimers;
+        });
+      }
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      setError("Failed to delete task. Please try again.");
+    }
+  };
+
+  // Timer functions (unchanged)
   const toggleTimer = async (taskId) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
@@ -226,21 +262,17 @@ function Tasks({ onTaskAdded, initialTaskData }) {
         const timerEntry = await tasksService.startTimer(taskId);
         setActiveTimerEntry(timerEntry);
         const timer = setInterval(() => {
-          setTasks((prevTasks) =>
-            prevTasks.map((t) =>
+          setTasks((prev) =>
+            prev.map((t) =>
               t.id === taskId ? { ...t, timeSpent: t.timeSpent + 1 } : t
             )
           );
         }, 1000);
         setTimers((prev) => ({ ...prev, [taskId]: timer }));
-        setTasks((prevTasks) =>
-          prevTasks.map((t) =>
+        setTasks((prev) =>
+          prev.map((t) =>
             t.id === taskId
-              ? {
-                  ...t,
-                  isTimerRunning: true,
-                  timerEntries: [...t.timerEntries, timerEntry],
-                }
+              ? { ...t, isTimerRunning: true, timerEntries: [...t.timerEntries, timerEntry] }
               : t
           )
         );
@@ -252,26 +284,17 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       try {
         const activeEntry = task.timerEntries.find((entry) => !entry.end_time);
         if (activeEntry) {
-          const duration = Math.floor(
-            (new Date() - new Date(activeEntry.start_time)) / 1000
-          );
-          const stoppedEntry = await tasksService.stopTimer(
-            activeEntry.id,
-            duration
-          );
-          setTasks((prevTasks) =>
-            prevTasks.map((t) =>
+          const duration = Math.floor((new Date() - new Date(activeEntry.start_time)) / 1000);
+          const stoppedEntry = await tasksService.stopTimer(activeEntry.id, duration);
+          setTasks((prev) =>
+            prev.map((t) =>
               t.id === taskId
                 ? {
                     ...t,
                     isTimerRunning: false,
                     timerEntries: t.timerEntries.map((entry) =>
                       entry.id === activeEntry.id
-                        ? {
-                            ...entry,
-                            end_time: stoppedEntry.end_time,
-                            duration: stoppedEntry.duration,
-                          }
+                        ? { ...entry, end_time: stoppedEntry.end_time, duration: stoppedEntry.duration }
                         : entry
                     ),
                   }
@@ -305,9 +328,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       setError(null);
       const taskId = taskToReset.id;
       if (taskToReset.isTimerRunning) {
-        const activeEntry = taskToReset.timerEntries.find(
-          (entry) => !entry.end_time
-        );
+        const activeEntry = taskToReset.timerEntries.find((entry) => !entry.end_time);
         if (activeEntry) await tasksService.stopTimer(activeEntry.id, 0);
       }
       if (timers[taskId]) {
@@ -319,17 +340,14 @@ function Tasks({ onTaskAdded, initialTaskData }) {
         });
       }
       if (taskToReset.timerEntries && taskToReset.timerEntries.length > 0) {
-        const { error } = await supabase
-          .from("timer_entries")
-          .delete()
-          .eq("task_id", taskId);
+        const { error } = await supabase.from("timer_entries").delete().eq("task_id", taskId);
         if (error) {
           console.error("Error deleting timer entries:", error);
           throw new Error("Failed to delete timer entries");
         }
       }
-      setTasks(
-        tasks.map((task) =>
+      setTasks((prev) =>
+        prev.map((task) =>
           task.id === taskId
             ? { ...task, timeSpent: 0, timerEntries: [], isTimerRunning: false }
             : task
@@ -372,12 +390,9 @@ function Tasks({ onTaskAdded, initialTaskData }) {
         delete taskToUpdate.isTimerRunning;
         delete taskToUpdate.attachments;
         console.log("Submitting task update:", taskToUpdate);
-        const updatedTask = await tasksService.updateTask(
-          editingTask.id,
-          taskToUpdate
-        );
-        setTasks(
-          tasks.map((task) =>
+        const updatedTask = await tasksService.updateTask(editingTask.id, taskToUpdate);
+        setTasks((prev) =>
+          prev.map((task) =>
             task.id === editingTask.id
               ? {
                   ...updatedTask,
@@ -386,9 +401,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                   timerEntries: task.timerEntries,
                   isTimerRunning: task.isTimerRunning,
                   completed:
-                    updatedTask.milestone === "Done"
-                      ? true
-                      : updatedTask.completed,
+                    updatedTask.milestone === "Done" ? true : updatedTask.completed,
                 }
               : task
           )
@@ -406,7 +419,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           attachments: newTask.attachments,
           completed: task.milestone === "Done" ? true : task.completed,
         };
-        setTasks([newTaskWithDefaults, ...tasks]);
+        setTasks((prev) => [newTaskWithDefaults, ...prev]);
         if (onTaskAdded) onTaskAdded(newTaskWithDefaults);
         setNewTask({
           name: "",
@@ -433,56 +446,6 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     }
   };
 
-  const toggleTask = async (id) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
-    try {
-      setError(null);
-      const updatedTask = await tasksService.updateTask(id, {
-        completed: !task.completed,
-      });
-      setTasks(
-        tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-      );
-    } catch (error) {
-      console.error("Error updating task:", error);
-      setError("Failed to update task status. Please try again.");
-    }
-  };
-
-  const deleteTask = async (id) => {
-    try {
-      setError(null);
-      await tasksService.deleteTask(id);
-      if (timers[id]) {
-        clearInterval(timers[id]);
-        setTimers((prev) => {
-          const newTimers = { ...prev };
-          delete newTimers[id];
-          return newTimers;
-        });
-      }
-      setTasks(tasks.filter((task) => task.id !== id));
-    } catch (error) {
-      console.error("Error deleting task:", error);
-      setError("Failed to delete task. Please try again.");
-    }
-  };
-
-  const calculateTaskTimeEntries = (timerEntries) => {
-    return timerEntries.map((entry) => {
-      const start = new Date(entry.start_time);
-      const end = entry.end_time ? new Date(entry.end_time) : new Date();
-      const duration = Math.floor((end - start) / 1000);
-      return { ...entry, duration, formattedDuration: formatTime(duration) };
-    });
-  };
-
-  const totalTimeSpent = tasks.reduce(
-    (total, task) => total + task.timeSpent,
-    0
-  );
-
   // Render Kanban view (draggable)
   const renderKanbanView = () => (
     <div className={styles.kanbanBoard}>
@@ -499,76 +462,46 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                     className={styles.columnContent}
                   >
                     {milestoneTasks.map((task, index) => (
-                      <Draggable
-                        key={task.id}
-                        draggableId={task.id}
-                        index={index}
-                      >
+                      <Draggable key={task.id} draggableId={task.id} index={index}>
                         {(provided, snapshot) => (
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
                             className={`${styles.task} ${task.completed ? styles.completed : ""} ${styles[task.priority.toLowerCase()]} ${snapshot.isDragging ? styles.dragging : ""}`}
-                            onClick={(e) => handleTaskClick(task, e)}
                           >
                             <div className={styles.taskTop}>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleTask(task.id);
-                                }}
+                                onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
                                 className={styles.checkButton}
                               >
                                 <Check size={20} />
                               </button>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteTask(task.id);
-                                }}
+                                onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
                                 className={styles.deleteButton}
                               >
                                 <Trash2 size={20} />
                               </button>
                             </div>
-                            <div
-                              className={styles.taskClickable}
-                              onClick={(e) => handleTaskClick(task, e)}
-                            >
+                            <div className={styles.taskClickable} onClick={(e) => handleTaskClick(task, e)}>
                               <div className={styles.taskContent}>
                                 <div className={styles.taskHeader}>
                                   <div className={styles.titleSection}>
-                                    <span className={styles.title}>
-                                      {task.name}
-                                    </span>
+                                    <span className={styles.title}>{task.name}</span>
                                     <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        startEditing(task);
-                                      }}
+                                      onClick={(e) => { e.stopPropagation(); startEditing(task); }}
                                       className={styles.editButton}
                                     >
                                       <Edit2 size={16} />
                                     </button>
                                   </div>
                                   <div className={styles.tags}>
-                                    <span
-                                      className={`${styles.tag} ${styles[task.priority.toLowerCase()]}`}
-                                    >
+                                    <span className={`${styles.tag} ${styles[task.priority.toLowerCase()]}`}>
                                       {task.priority}
                                     </span>
                                   </div>
                                 </div>
-                                {/* <div className={styles.taskSummary}>
-                                  <div className={styles.timeInfo}>
-                                    <Clock size={16} />
-                                    <span>
-                                      Total Time: {formatTime(task.timeSpent)}
-                                    </span>
-                                  </div>
-                                 
-                                </div> */}
                                 <div className={styles.projectInfo}>
                                   <div className={styles.infoItem}>
                                     <Building2 size={16} />
@@ -579,103 +512,52 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                                     <span>{task.project}</span>
                                   </div>
                                 </div>
-                                {/* <p className={styles.description}>
-                                  {task.description}
-                                </p> */}
-                                {task.attachments.length > 0 && (
-                                  <div className={styles.taskAttachments}>
-                                    <h4>Attachments:</h4>
-                                    <div className={styles.attachmentGrid}>
-                                      {task.attachments.map((file, index) => (
-                                        <a
-                                          key={index}
-                                          href={file.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className={styles.attachmentLink}
-                                        >
-                                          <Paperclip size={16} />
-                                          {file.name}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
                                 <div className={styles.taskFooter}>
-                                  {/* <div className={styles.taskInfo}>
-                                    <span className={styles.assignee}>
-                                      Assignee: {task.assignee}
-                                    </span>
-                                  </div> */}
                                   <div className={styles.taskDates}>
-                                    <span className={styles.dates}>Timeline:
-                                    {new Date(task.start_date).toLocaleDateString('de-DE')} - {new Date(task.due_date).toLocaleDateString('de-DE')}
+                                    <span className={styles.dates}>
+                                      Timeline: {new Date(task.start_date).toLocaleDateString("de-DE")} - {new Date(task.due_date).toLocaleDateString("de-DE")}
                                     </span>
                                   </div>
                                   <div className={styles.timerSection}>
                                     <div className={styles.timer}>
                                       <Clock size={16} />
-                                      <span className={styles.time}>
-                                        {formatTime(task.timeSpent)}
-                                      </span>
+                                      <span className={styles.time}>{formatTime(task.timeSpent)}</span>
                                       <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleTimer(task.id);
-                                        }}
+                                        onClick={(e) => { e.stopPropagation(); toggleTimer(task.id); }}
                                         className={`${styles.timerButton} ${task.isTimerRunning ? styles.running : ""}`}
                                       >
-                                        {task.isTimerRunning ? (
-                                          <Pause size={16} />
-                                        ) : (
-                                          <Play size={16} />
-                                        )}
+                                        {task.isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
                                       </button>
                                       <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          promptResetTimer(task.id);
-                                        }}
+                                        onClick={(e) => { e.stopPropagation(); promptResetTimer(task.id); }}
                                         className={styles.resetButton}
                                         title="Reset Timer"
                                       >
                                         <StopCircle size={16} />
                                       </button>
                                     </div>
-                                    <div className={styles.sessionInfo}>
-                                    <span>
-                                      {task.timerEntries.length} sessions
-                                    </span>
-                                  </div>
                                     {task.timerEntries.length > 0 && (
                                       <div className={styles.timerEntries}>
                                         <h5>Timer Entries:</h5>
                                         <div className={styles.entriesList}>
-                                          {calculateTaskTimeEntries(
-                                            task.timerEntries
-                                          ).map((entry, index) => (
-                                            <div
-                                              key={index}
-                                              className={styles.timerEntry}
-                                            >
-                                              <span>
-                                                {new Date(
-                                                  entry.start_time
-                                                ).toLocaleTimeString()}
-                                              </span>
-                                              <span>→</span>
-                                              <span>
-                                                {entry.end_time
-                                                  ? new Date(
-                                                      entry.end_time
-                                                    ).toLocaleTimeString()
-                                                  : "Running"}
-                                              </span>
-                                              <span className={styles.duration}>
-                                                {entry.formattedDuration}
-                                              </span>
-                                            </div>
-                                          ))}
+                                          {task.timerEntries.map((entry, index) => {
+                                            const start = new Date(entry.start_time).toLocaleTimeString();
+                                            const end = entry.end_time
+                                              ? new Date(entry.end_time).toLocaleTimeString()
+                                              : "Running";
+                                            const duration = formatTime(
+                                              entry.duration ||
+                                                Math.floor((new Date() - new Date(entry.start_time)) / 1000)
+                                            );
+                                            return (
+                                              <div key={index} className={styles.timerEntry}>
+                                                <span>{start}</span>
+                                                <span>→</span>
+                                                <span>{end}</span>
+                                                <span className={styles.duration}>{duration}</span>
+                                              </div>
+                                            );
+                                          })}
                                         </div>
                                       </div>
                                     )}
@@ -707,9 +589,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   const renderListView = () => (
     <div className={styles.listView}>
       {tasks.length === 0 ? (
-        <p className={styles.noTasks}>
-          No tasks yet. Add some tasks to get started!
-        </p>
+        <p className={styles.noTasks}>No tasks yet. Add some tasks to get started!</p>
       ) : (
         <div className={styles.list}>
           {tasks.map((task) => (
@@ -720,20 +600,14 @@ function Tasks({ onTaskAdded, initialTaskData }) {
             >
               <div className={styles.listItemTop}>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleTask(task.id);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); toggleTask(task.id); }}
                   className={styles.checkButton}
                 >
                   <Check size={20} />
                 </button>
                 <span className={styles.milestone}>{task.milestone}</span>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteTask(task.id);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
                   className={styles.deleteButton}
                 >
                   <Trash2 size={20} />
@@ -744,32 +618,18 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                   <div className={styles.titleSection}>
                     <span className={styles.title}>{task.name}</span>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startEditing(task);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); startEditing(task); }}
                       className={styles.editButton}
                     >
                       <Edit2 size={16} />
                     </button>
                   </div>
                   <div className={styles.tags}>
-                    <span
-                      className={`${styles.tag} ${styles[task.priority.toLowerCase()]}`}
-                    >
+                    <span className={`${styles.tag} ${styles[task.priority.toLowerCase()]}`}>
                       {task.priority}
                     </span>
                   </div>
                 </div>
-                {/* <div className={styles.taskSummary}>
-                  <div className={styles.timeInfo}>
-                    <Clock size={16} />
-                    <span>Total Time: {formatTime(task.timeSpent)}</span>
-                  </div>
-                  <div className={styles.sessionInfo}>
-                    <span>{task.timerEntries.length} sessions</span>
-                  </div>
-                </div> */}
                 <div className={styles.projectInfo}>
                   <div className={styles.infoItem}>
                     <Building2 size={16} />
@@ -780,7 +640,6 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                     <span>{task.project}</span>
                   </div>
                 </div>
-                {/* <p className={styles.description}>{task.description}</p> */}
                 {task.attachments.length > 0 && (
                   <div className={styles.taskAttachments}>
                     <h4>Attachments:</h4>
@@ -802,37 +661,22 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                 )}
                 <div className={styles.taskFooter}>
                   <div className={styles.taskInfo}>
-                    {/* <span className={styles.assignee}>
-                      Assignee: {task.assignee}
-                    </span> */}
-                    <span className={styles.dates}> Timeline: 
-                    {new Date(task.start_date).toLocaleDateString('de-DE')} - {new Date(task.due_date).toLocaleDateString('de-DE')}
+                    <span className={styles.dates}>
+                      Timeline: {new Date(task.start_date).toLocaleDateString("de-DE")} - {new Date(task.due_date).toLocaleDateString("de-DE")}
                     </span>
                   </div>
                   <div className={styles.timerSection}>
                     <div className={styles.timer}>
                       <Clock size={16} />
-                      <span className={styles.time}>
-                        {formatTime(task.timeSpent)}
-                      </span>
+                      <span className={styles.time}>{formatTime(task.timeSpent)}</span>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleTimer(task.id);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); toggleTimer(task.id); }}
                         className={`${styles.timerButton} ${task.isTimerRunning ? styles.running : ""}`}
                       >
-                        {task.isTimerRunning ? (
-                          <Pause size={16} />
-                        ) : (
-                          <Play size={16} />
-                        )}
+                        {task.isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          promptResetTimer(task.id);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); promptResetTimer(task.id); }}
                         className={styles.resetButton}
                         title="Reset Timer"
                       >
@@ -846,28 +690,22 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                       <div className={styles.timerEntries}>
                         <h5>Timer Entries:</h5>
                         <div className={styles.entriesList}>
-                          {calculateTaskTimeEntries(task.timerEntries).map(
-                            (entry, index) => (
+                          {task.timerEntries.map((entry, index) => {
+                            const start = new Date(entry.start_time).toLocaleTimeString();
+                            const end = entry.end_time ? new Date(entry.end_time).toLocaleTimeString() : "Running";
+                            const duration = formatTime(
+                              entry.duration ||
+                                Math.floor((new Date() - new Date(entry.start_time)) / 1000)
+                            );
+                            return (
                               <div key={index} className={styles.timerEntry}>
-                                <span>
-                                  {new Date(
-                                    entry.start_time
-                                  ).toLocaleTimeString()}
-                                </span>
+                                <span>{start}</span>
                                 <span>→</span>
-                                <span>
-                                  {entry.end_time
-                                    ? new Date(
-                                        entry.end_time
-                                      ).toLocaleTimeString()
-                                    : "Running"}
-                                </span>
-                                <span className={styles.duration}>
-                                  {entry.formattedDuration}
-                                </span>
+                                <span>{end}</span>
+                                <span className={styles.duration}>{duration}</span>
                               </div>
-                            )
-                          )}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -881,113 +719,6 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     </div>
   );
 
-  // Modal to display task details when a task is clicked (and not editing)
-  const renderTaskDetailsModal = () => (
-    <div className={styles.modalOverlay} onClick={() => setSelectedTask(null)}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <button
-          className={styles.modalCloseButton}
-          onClick={() => setSelectedTask(null)}
-        >
-          <X size={20} />
-        </button>
-        {selectedTask && (
-          <div className={styles.taskDetails}>
-            <h2>{selectedTask.name}</h2>
-            <p>
-              <strong>Client/Customer:</strong> {selectedTask.client}
-            </p>
-            <p>
-              <strong>Project:</strong> {selectedTask.project}
-            </p>
-            <p>
-              <strong>Milestone:</strong> {selectedTask.milestone}
-            </p>
-            <p>
-              <strong>Priority:</strong> {selectedTask.priority}
-            </p>
-            <p>
-  <strong>Start Date:</strong> {new Date(selectedTask.start_date).toLocaleDateString('de-DE')}
-</p>
-<p>
-  <strong>Due Date:</strong> {new Date(selectedTask.due_date).toLocaleDateString('de-DE')}
-</p>
-
-            <p>
-              <strong>Assignee:</strong> {selectedTask.assignee}
-            </p>
-            
-            <p>
-              <strong>Description:</strong> {selectedTask.description}
-            </p>
-            {selectedTask.attachments.length > 0 && (
-              <div className={styles.taskAttachments}>
-                <h4>Attachments:</h4>
-                <div className={styles.attachmentGrid}>
-                  {selectedTask.attachments.map((file, index) => (
-                    <a
-                      key={index}
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.attachmentLink}
-                    >
-                      <Paperclip size={16} />
-                      {file.name}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className={styles.taskFooter}>
-              {/* <div className={styles.taskInfo}>
-                <span className={styles.assignee}>
-                  Assignee: {selectedTask.assignee}
-                </span>
-                <span className={styles.dates}>
-                  {selectedTask.start_date} - {selectedTask.due_date}
-                </span>
-              </div> */}
-              <div className={styles.timerSection}>
-                <div className={styles.timer}>
-                  <Clock size={16} />
-                  <span className={styles.time}>
-                    {formatTime(selectedTask.timeSpent)}
-                  </span>
-                </div>
-                {selectedTask.timerEntries.length > 0 && (
-                  <div className={styles.timerEntries}>
-                    <h5>Timer Entries:</h5>
-                    <div className={styles.entriesList}>
-                      {calculateTaskTimeEntries(selectedTask.timerEntries).map(
-                        (entry, index) => (
-                          <div key={index} className={styles.timerEntry}>
-                            <span>
-                              {new Date(entry.start_time).toLocaleTimeString()}
-                            </span>
-                            <span>→</span>
-                            <span>
-                              {entry.end_time
-                                ? new Date(entry.end_time).toLocaleTimeString()
-                                : "Running"}
-                            </span>
-                            <span className={styles.duration}>
-                              {entry.formattedDuration}
-                            </span>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <div className={styles.container}>
       <h1>Tasks</h1>
@@ -995,7 +726,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       <div className={styles.summary}>
         <div className={styles.totalTime}>
           <Clock size={20} />
-          <span>Total Time: {formatTime(totalTimeSpent)}</span>
+          <span>Total Time: {formatTime(tasks.reduce((total, task) => total + task.timeSpent, 0))}</span>
         </div>
       </div>
 
@@ -1088,9 +819,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                 <select
                   id="milestone"
                   name="milestone"
-                  value={
-                    editingTask ? editingTask.milestone : newTask.milestone
-                  }
+                  value={editingTask ? editingTask.milestone : newTask.milestone}
                   onChange={handleInputChange}
                 >
                   <option value="Todo">Todo</option>
@@ -1120,9 +849,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                   type="date"
                   id="start_date"
                   name="start_date"
-                  value={
-                    editingTask ? editingTask.start_date : newTask.start_date
-                  }
+                  value={editingTask ? editingTask.start_date : newTask.start_date}
                   onChange={handleInputChange}
                   required
                 />
@@ -1155,9 +882,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
               <textarea
                 id="description"
                 name="description"
-                value={
-                  editingTask ? editingTask.description : newTask.description
-                }
+                value={editingTask ? editingTask.description : newTask.description}
                 onChange={handleInputChange}
                 rows="4"
                 required
@@ -1178,13 +903,9 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                   className={styles.fileInput}
                 />
               </label>
-              {(editingTask ? editingTask.attachments : newTask.attachments)
-                .length > 0 && (
+              {(editingTask ? editingTask.attachments : newTask.attachments).length > 0 && (
                 <div className={styles.attachmentList}>
-                  {(editingTask
-                    ? editingTask.attachments
-                    : newTask.attachments
-                  ).map((file, index) => (
+                  {(editingTask ? editingTask.attachments : newTask.attachments).map((file, index) => (
                     <div key={index} className={styles.attachmentItem}>
                       <span>{file.name}</span>
                       <button
@@ -1212,11 +933,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
               >
                 Close
               </button>
-              <button
-                type="submit"
-                className={styles.saveButton}
-                disabled={isSubmitting}
-              >
+              <button type="submit" className={styles.saveButton} disabled={isSubmitting}>
                 <Save size={20} />
                 {isSubmitting ? "Saving..." : editingTask ? "Update" : "Save"}
               </button>
@@ -1228,26 +945,16 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       {/* Confirmation Dialog */}
       {showConfirmation && (
         <div className={styles.confirmationOverlay} onClick={cancelResetTimer}>
-          <div
-            className={styles.confirmationDialog}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className={styles.confirmationDialog} onClick={(e) => e.stopPropagation()}>
             <h3>Reset Timer</h3>
             <p>
-              Are you sure you want to reset the timer for this task? This will
-              permanently delete all timer entries and cannot be undone.
+              Are you sure you want to reset the timer for this task? This will permanently delete all timer entries and cannot be undone.
             </p>
             <div className={styles.confirmationButtons}>
-              <button
-                onClick={cancelResetTimer}
-                className={styles.cancelButton}
-              >
+              <button onClick={cancelResetTimer} className={styles.cancelButton}>
                 Cancel
               </button>
-              <button
-                onClick={confirmResetTimer}
-                className={styles.confirmButton}
-              >
+              <button onClick={confirmResetTimer} className={styles.confirmButton}>
                 Reset Timer
               </button>
             </div>

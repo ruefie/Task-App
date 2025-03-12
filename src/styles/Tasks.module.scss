@@ -868,6 +868,11 @@ $warning-color: #f59e0b;
 }
 
 // Modal overlay styles
+
+.taskClickable {
+  cursor: pointer;
+}
+
 .modalOverlay {
   position: fixed;
   top: 0;
