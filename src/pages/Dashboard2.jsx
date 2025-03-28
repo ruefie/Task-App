@@ -1,8 +1,6 @@
-// src/pages/Dashboard.jsx
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Routes, Route, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-
 import {
   Calendar as CalendarIcon,
   CheckSquare,
@@ -13,18 +11,18 @@ import {
   Home as HomeIcon,
   Settings,
   Shield,
-  AlertCircle,
+  AlertCircle
 } from 'lucide-react';
+import { tasksService } from '../lib/tasks';
 import styles from '../styles/Dashboard.module.scss';
 
 // Lazy load components
-const Home = lazy(() => import('../components/Home.jsx'));
 const Calendar = lazy(() => import('../components/Calendar.jsx'));
-const Tasks = lazy(() => import('../components/Tasks/Tasks.jsx'));
+const Tasks = lazy(() => import('../components/Tasks.jsx'));
 const Profile = lazy(() => import('../components/Profile.jsx'));
 const AdminPanel = lazy(() => import('../components/AdminPanel.jsx'));
 
-// Loading component
+// Loading component using CSS classes
 const LoadingComponent = () => (
   <div className={styles.loadingContainer}>
     <div>
@@ -36,7 +34,7 @@ const LoadingComponent = () => (
   </div>
 );
 
-// Error component
+// Error component using CSS classes
 const ErrorComponent = ({ message }) => (
   <div className={styles.errorComponent}>
     <AlertCircle size={20} />
@@ -44,29 +42,145 @@ const ErrorComponent = ({ message }) => (
   </div>
 );
 
+// Home component (directly defined here to avoid import issues)
+const Home = () => {
+  const { user ,profile} = useAuth();
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const tasksData = await tasksService.getTasks();
+        console.log('Home - Loaded tasks:', tasksData?.length || 0);
+        setTasks(tasksData || []);
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+        setError('Failed to load tasks. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTasks();
+  }, []);
+
+  return (
+    <div className={styles.homeContainer}>
+      <div className={styles.homeHeader}>
+      <h1 className={styles.homeTitle}>Welcome back!</h1>
+      <p className={styles.homeUserEmail}>{profile?.first_name}</p>
+      </div>
+      
+      {error && <ErrorComponent message={error} />}
+      
+      {loading ? (
+        <p className={styles.homeLoading}>Loading your tasks...</p>
+      ) : (
+        <div className={styles.homeGrid}>
+          {/* Task Overview Card */}
+          <div className={styles.overviewCard}>
+            <h2 className={styles.overviewTitle}>Task Overview</h2>
+            <div className={styles.overviewBody}>
+              <div className={styles.overviewRow}>
+                <CheckSquare size={20} />
+                <div>
+                  <h3 className={styles.overviewRowTitle}>Tasks</h3>
+                  <p className={styles.overviewRowStats}>
+                    {tasks.filter(t => t.completed).length} / {tasks.length} completed
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Recent Tasks Card */}
+          <div className={styles.recentCard}>
+            <h2 className={styles.recentTitle}>Recent Tasks</h2>
+            {tasks.length === 0 ? (
+              <p className={styles.noTasks}>No tasks yet. Add some tasks to get started!</p>
+            ) : (
+              <div className={styles.recentList}>
+                {tasks.slice(0, 5).map(task => (
+                  <div
+                    key={task.id}
+                    className={`${styles.recentItem} ${styles[task.priority?.toLowerCase() || 'normal']}`}
+                  >
+                    <div className={styles.recentHeader}>
+                      <h3 className={styles.recentTaskName}>{task.name}</h3>
+                      <span className={`${styles.recentPriority} ${styles[task.priority?.toLowerCase() || 'normal']}`}>
+              {task.priority || 'Normal'}
+            </span>
+                    </div>
+                    <div className={styles.recentInfo}>
+                      {task.project || 'No project'} • Due: {task.due_date || 'Not set'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 function Dashboard() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { user, profile, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Helper to determine active route
-  const isActiveRoute = (path) => {
-    return location.pathname.startsWith(path);
+  useEffect(() => {
+    console.log("Dashboard mounted, isAdmin:", isAdmin);
+    console.log("User profile:", profile);
+    loadTasks();
+  }, [isAdmin, profile]);
+
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log("Fetching tasks from service");
+      const tasksData = await tasksService.getTasks();
+      console.log("Tasks loaded:", tasksData?.length || 0);
+      setTasks(tasksData || []);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      setError('Failed to load tasks. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignOut = async () => {
     try {
+      console.log("Signing out");
       await signOut();
       navigate('/login');
     } catch (error) {
       console.error('Error signing out:', error);
+      setError('Failed to sign out. Please try again.');
     }
+  };
+
+  const isActiveRoute = (path) => {
+    if (path === '/dashboard' && location.pathname === '/dashboard') {
+      return true;
+    }
+    return location.pathname.startsWith(path);
   };
 
   return (
     <div className={styles.container}>
-      {/* Mobile Sidebar */}
+      {/* Mobile sidebar */}
       <div className={sidebarOpen ? styles.mobileOverlayVisible : styles.mobileOverlayHidden}>
         <div className={styles.mobileOverlay} onClick={() => setSidebarOpen(false)}></div>
         <div className={styles.mobileSidebar}>
@@ -83,8 +197,8 @@ function Dashboard() {
             <nav className={styles.navContainer}>
               <div className={styles.navList}>
                 <Link
-                  to="/dashboard/home"
-                  className={`${styles.navItem} ${styles.mobile} ${isActiveRoute('/dashboard/home') ? styles.active : ''}`}
+                  to="/dashboard"
+                  className={`${styles.navItem} ${styles.mobile} ${isActiveRoute('/dashboard') && location.pathname === '/dashboard' ? styles.active : ''}`}
                   onClick={() => setSidebarOpen(false)}
                 >
                   <HomeIcon className={styles.navIcon} />
@@ -137,7 +251,10 @@ function Dashboard() {
                   <p className={styles.userName}>
                     {profile?.first_name || ''} {profile?.last_name || ''}
                   </p>
-                  <button onClick={handleSignOut} className={styles.signOutButton}>
+                  <button
+                    onClick={handleSignOut}
+                    className={styles.signOutButton}
+                  >
                     <LogOut className={styles.signOutIcon} />
                     Sign out
                   </button>
@@ -148,7 +265,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Desktop Sidebar */}
+      {/* Desktop sidebar */}
       <div className={styles.sidebarDesktop}>
         <div className={styles.sidebarWrapper}>
           <div className={styles.sidebarContent}>
@@ -159,8 +276,8 @@ function Dashboard() {
               <nav className={styles.navContainer}>
                 <div className={styles.navList}>
                   <Link
-                    to="/dashboard/home"
-                    className={`${styles.navItem} ${styles.desktop} ${isActiveRoute('/dashboard/home') ? styles.active : ''}`}
+                    to="/dashboard"
+                    className={`${styles.navItem} ${styles.desktop} ${isActiveRoute('/dashboard') && location.pathname === '/dashboard' ? styles.active : ''}`}
                   >
                     <HomeIcon className={styles.navIcon} />
                     Home
@@ -208,7 +325,10 @@ function Dashboard() {
                     <p className={styles.userName}>
                       {profile?.first_name || ''} {profile?.last_name || ''}
                     </p>
-                    <button onClick={handleSignOut} className={styles.signOutButton}>
+                    <button
+                      onClick={handleSignOut}
+                      className={styles.signOutButton}
+                    >
                       <LogOut className={styles.signOutIcon} />
                       Sign out
                     </button>
@@ -220,10 +340,12 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className={styles.mainContent}>
         <div className={styles.mobileHeader}>
-          <button className={styles.menuButton} onClick={() => setSidebarOpen(true)}>
+          <button
+            className={styles.menuButton}
+            onClick={() => setSidebarOpen(true)}
+          >
             <span className={styles.srOnly}>Open sidebar</span>
             <Menu className={styles.menuIcon} />
           </button>
@@ -231,10 +353,11 @@ function Dashboard() {
         <main className={styles.mainArea}>
           <div className={styles.contentWrapper}>
             <div className={styles.contentContainer}>
+              {error && <ErrorComponent message={error} />}
+              
               <Suspense fallback={<LoadingComponent />}>
                 <Routes>
-                <Route index element={<Navigate to="home" replace />} />
-                  <Route path="/home" element={<Home />} />
+                  <Route path="/" element={<Home />} />
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/tasks" element={<Tasks />} />
                   <Route path="/profile" element={<Profile />} />
@@ -247,7 +370,7 @@ function Dashboard() {
                       <div className={styles.pageNotFound}>
                         <h2>Page Not Found</h2>
                         <p>The page you're looking for doesn't exist.</p>
-                        <Link to="/dashboard/home" className={styles.goHome}>
+                        <Link to="/dashboard" className={styles.goHome}>
                           Go to Dashboard
                         </Link>
                       </div>

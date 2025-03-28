@@ -33,7 +33,6 @@ export function AuthProvider({ children }) {
       console.log("Profile data loaded:", profileData);
       if (profileData) {
         setProfile(profileData);
-        // Set isAdmin based on the profile field (ensure the database field is boolean)
         setIsAdmin(Boolean(profileData.is_admin));
         console.log("Profile set, isAdmin:", Boolean(profileData.is_admin));
       } else {
@@ -46,30 +45,13 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     let isMounted = true;
     const initAuth = async () => {
       try {
         console.log("AuthProvider: Initializing auth state");
-        // Attempt to read a cached session from localStorage
-        const cachedSessionStr = localStorage.getItem('supabase.auth.token');
-        if (cachedSessionStr) {
-          try {
-            const cachedSession = JSON.parse(cachedSessionStr);
-            // Depending on your version, the session structure might be different.
-            // This is an optional quick-check before calling getSession().
-            if (cachedSession && cachedSession.currentSession && cachedSession.currentSession.user) {
-              console.log("Found cached session:", cachedSession.currentSession.user.id);
-              setUser(cachedSession.currentSession.user);
-              // Start loading profile in background
-              loadUserProfile(cachedSession.currentSession.user.id);
-            }
-          } catch (parseError) {
-            console.error("Error parsing cached session:", parseError);
-          }
-        }
-        // Now call getSession to update the session from Supabase
         const { data, error: sessionError } = await supabase.auth.getSession();
         if (!isMounted) return;
         if (sessionError) {
@@ -158,15 +140,29 @@ export function AuthProvider({ children }) {
           console.log("Sign up successful:", result.data);
           if (result.data.user && data.options?.data) {
             try {
-              await profilesService.createProfile(result.data.user.id, data.options.data);
-              console.log("Profile created with metadata:", data.options.data);
-            } catch (profileError) {
-              if (profileError.code === "23505") {
-                console.log("Profile already exists, skipping creation.");
-              } else {
-                console.error("Error creating profile:", profileError);
-                setError(profileError.message);
+              // First, try to get the profile for the user
+              let profileData;
+              try {
+                profileData = await profilesService.getProfile(result.data.user.id);
+              } catch (getError) {
+                // If no profile is found, we'll assume it doesn't exist
+                profileData = null;
               }
+              if (profileData) {
+                // If a profile exists, update it with the new metadata
+                console.log("Profile already exists, updating metadata");
+                await profilesService.updateProfile({
+                  first_name: data.options.data.first_name,
+                  last_name: data.options.data.last_name,
+                });
+              } else {
+                // If no profile exists, create one
+                await profilesService.createProfile(result.data.user.id, data.options.data);
+                console.log("Profile created with metadata:", data.options.data);
+              }
+            } catch (profileError) {
+              console.error("Error in profile creation/updating:", profileError);
+              // Optionally, setError(profileError.message);
             }
           }
           // Force sign out after registration so the user is not auto-logged in.
@@ -199,7 +195,11 @@ export function AuthProvider({ children }) {
           console.log("Sign in successful:", result.data.user.id);
           setUser(result.data.user);
           if (result.data.user) {
-            await loadUserProfile(result.data.user.id);
+            try {
+              await loadUserProfile(result.data.user.id);
+            } catch (profileError) {
+              console.error("Error loading profile after sign in:", profileError);
+            }
           }
         }
         return result;
@@ -251,4 +251,4 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = () => useContext(AuthContext);
+// export const useAuth = () => useContext(AuthContext);

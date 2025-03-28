@@ -1,36 +1,53 @@
-// src/components/Calendar.jsx
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Calendar as CalendarIcon, ListChecks, CalendarRange, CalendarDays } from 'lucide-react';
 import Tasks from './Tasks';
-import { useAuth } from '../contexts/AuthContext';
-import { useTasks } from '../contexts/TasksContext';
+import { tasksService } from '../lib/tasks';
 import styles from '../styles/Calendar.module.scss';
 
 function Calendar() {
-  const { isAdmin } = useAuth();
-  const { tasks, loadTasks, loading, error } = useTasks();
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [newTaskData, setNewTaskData] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [newTaskData, setNewTaskData] = useState(null);
   const [view, setView] = useState('month'); // 'day', 'week', 'month', 'year'
 
   useEffect(() => {
     loadTasks();
-  }, [isAdmin, loadTasks]);
+  }, []);
+
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const tasksData = await tasksService.getTasks();
+      console.log('Calendar - Loaded tasks:', tasksData);
+      setTasks(tasksData);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      setError('Failed to load tasks. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDateClick = (day) => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
     setSelectedDate(day);
-    setNewTaskData({ start_date: formattedDate });
+    setNewTaskData({
+      start_date: formattedDate
+    });
     setShowTaskForm(true);
   };
 
   const handleTaskAdded = (task) => {
     setShowTaskForm(false);
-    loadTasks();
+    loadTasks(); // Reload tasks after adding a new one
   };
 
   const closeTaskForm = () => {
@@ -99,28 +116,33 @@ function Calendar() {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
     return tasks.filter(task => task.start_date === dateStr);
   };
 
   const getDaysOfWeek = () => {
     const date = new Date(currentMonth);
-    const day = date.getDay();
-    const diff = date.getDate() - day;
+    const day = date.getDay(); // Get current day of week
+    const diff = date.getDate() - day; // Adjust to get Sunday
+    
     const weekDays = [];
     for (let i = 0; i < 7; i++) {
       const newDate = new Date(date);
       newDate.setDate(diff + i);
       weekDays.push(newDate);
     }
+    
     return weekDays;
   };
 
   const getMonthsOfYear = () => {
     const year = currentMonth.getFullYear();
     const months = [];
+    
     for (let i = 0; i < 12; i++) {
       months.push(new Date(year, i, 1));
     }
+    
     return months;
   };
 
@@ -192,52 +214,79 @@ function Calendar() {
     }
   };
 
+  // Generate calendar days for month view
   const renderCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentMonth);
     const firstDay = getFirstDayOfMonth(currentMonth);
     const days = [];
+
+    // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className={`${styles.day} ${styles.emptyDay}`}></div>);
+      days.push(
+        <div key={`empty-${i}`} className={`${styles.day} ${styles.emptyDay}`}></div>
+      );
     }
+
+    // Add cells for each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const tasksForDay = getTasksForDate(day);
+      
       days.push(
-        <div key={day} className={styles.day} onClick={() => handleDateClick(day)}>
+        <div
+          key={day}
+          className={styles.day}
+          onClick={() => handleDateClick(day)}
+        >
           <span className={styles.dayNumber}>{day}</span>
+          
           {tasksForDay.length > 0 && (
             <div className={styles.tasksList}>
               {tasksForDay.map(task => (
-                <div key={task.id} className={`${styles.taskItem} ${getPriorityClass(task.priority)}`}>
+                <div 
+                  key={task.id} 
+                  className={`${styles.taskItem} ${getPriorityClass(task.priority)}`}
+                >
                   {task.name}
                 </div>
               ))}
             </div>
           )}
-          <button className={styles.addTask} onClick={(e) => { e.stopPropagation(); handleDateClick(day); }}>
+          
+          <button 
+            className={styles.addTask}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDateClick(day);
+            }}
+          >
             <Plus size={14} />
           </button>
         </div>
       );
     }
+
     return days;
   };
 
+  // Render a single day view
   const renderDayView = () => {
     const date = new Date(currentMonth);
     const day = date.getDate();
     const tasksForDay = getTasksForDate(day);
+
     return (
       <div className={styles.dayView}>
         <div className={styles.dayHeader}>
-          <span className={styles.dayViewDate}>
-            {date.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </span>
+          <span className={styles.dayViewDate}>{date.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
         </div>
         <div className={styles.dayContent}>
           {tasksForDay.length > 0 ? (
             <div className={styles.dayTasksList}>
               {tasksForDay.map(task => (
-                <div key={task.id} className={`${styles.dayTaskItem} ${getPriorityClass(task.priority)}`}>
+                <div 
+                  key={task.id} 
+                  className={`${styles.dayTaskItem} ${getPriorityClass(task.priority)}`}
+                >
                   <span className={styles.taskTime}>{task.start_time || '00:00'}</span>
                   <span className={styles.taskName}>{task.name}</span>
                 </div>
@@ -246,7 +295,10 @@ function Calendar() {
           ) : (
             <div className={styles.noTasks}>No tasks scheduled for this day</div>
           )}
-          <button className={styles.addDayTask} onClick={() => handleDateClick(date.getDate())}>
+          <button 
+            className={styles.addDayTask}
+            onClick={() => handleDateClick(date.getDate())}
+          >
             Add Task <Plus size={16} />
           </button>
         </div>
@@ -254,8 +306,10 @@ function Calendar() {
     );
   };
 
+  // Render week view
   const renderWeekView = () => {
     const weekDays = getDaysOfWeek();
+    
     return (
       <div className={styles.weekView}>
         <div className={styles.weekDays}>
@@ -265,8 +319,12 @@ function Calendar() {
             const year = date.getFullYear();
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const tasksForDay = tasks.filter(task => task.start_date === dateStr);
+            
             return (
-              <div key={index} className={styles.weekDay} onClick={() => { setCurrentMonth(date); handleDateClick(day); }}>
+              <div key={index} className={styles.weekDay} onClick={() => {
+                setCurrentMonth(date);
+                handleDateClick(day);
+              }}>
                 <div className={styles.weekDayHeader}>
                   <span className={styles.weekDayName}>{date.toLocaleDateString('default', { weekday: 'short' })}</span>
                   <span className={styles.weekDayNumber}>{day}</span>
@@ -275,7 +333,10 @@ function Calendar() {
                   {tasksForDay.length > 0 ? (
                     <div className={styles.weekTasksList}>
                       {tasksForDay.map(task => (
-                        <div key={task.id} className={`${styles.weekTaskItem} ${getPriorityClass(task.priority)}`}>
+                        <div 
+                          key={task.id} 
+                          className={`${styles.weekTaskItem} ${getPriorityClass(task.priority)}`}
+                        >
                           {task.name}
                         </div>
                       ))}
@@ -283,7 +344,14 @@ function Calendar() {
                   ) : (
                     <div className={styles.noWeekTasks}>No tasks</div>
                   )}
-                  <button className={styles.addWeekTask} onClick={(e) => { e.stopPropagation(); setCurrentMonth(date); handleDateClick(day); }}>
+                  <button 
+                    className={styles.addWeekTask}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentMonth(date);
+                      handleDateClick(day);
+                    }}
+                  >
                     <Plus size={14} />
                   </button>
                 </div>
@@ -295,8 +363,10 @@ function Calendar() {
     );
   };
 
+  // Render year view
   const renderYearView = () => {
     const months = getMonthsOfYear();
+    
     return (
       <div className={styles.yearView}>
         <div className={styles.yearGrid}>
@@ -304,12 +374,22 @@ function Calendar() {
             const month = date.getMonth();
             const year = date.getFullYear();
             const monthName = date.toLocaleDateString('default', { month: 'short' });
+            
+            // Count tasks in this month
             const tasksInMonth = tasks.filter(task => {
               const taskDate = new Date(task.start_date);
               return taskDate.getMonth() === month && taskDate.getFullYear() === year;
             });
+            
             return (
-              <div key={index} className={styles.yearMonth} onClick={() => { setCurrentMonth(date); setView('month'); }}>
+              <div 
+                key={index} 
+                className={styles.yearMonth}
+                onClick={() => {
+                  setCurrentMonth(date);
+                  setView('month');
+                }}
+              >
                 <div className={styles.yearMonthHeader}>
                   <span className={styles.yearMonthName}>{monthName}</span>
                 </div>
@@ -325,7 +405,8 @@ function Calendar() {
       </div>
     );
   };
-
+  
+  // Render the appropriate view based on the current selection
   const renderCalendarView = () => {
     switch(view) {
       case 'day':
@@ -374,35 +455,57 @@ function Calendar() {
   return (
     <div className={styles.container}>
       <h1>Calendar</h1>
+      
       {error && <p className={styles.error}>{error}</p>}
+      
       <div className={styles.calendar}>
         <div className={styles.header}>
           <h2>{renderHeaderTitle()}</h2>
+          
           <div className={styles.viewToggle}>
-            <button className={`${styles.viewButton} ${view === 'day' ? styles.activeView : ''}`} onClick={() => setView('day')} title="Daily View">
+            <button 
+              className={`${styles.viewButton} ${view === 'day' ? styles.activeView : ''}`}
+              onClick={() => setView('day')}
+              title="Daily View"
+            >
               <CalendarDays size={18} />
               <span>Day</span>
             </button>
-            <button className={`${styles.viewButton} ${view === 'week' ? styles.activeView : ''}`} onClick={() => setView('week')} title="Weekly View">
+            <button 
+              className={`${styles.viewButton} ${view === 'week' ? styles.activeView : ''}`}
+              onClick={() => setView('week')}
+              title="Weekly View"
+            >
               <CalendarRange size={18} />
               <span>Week</span>
             </button>
-            <button className={`${styles.viewButton} ${view === 'month' ? styles.activeView : ''}`} onClick={() => setView('month')} title="Monthly View">
+            <button 
+              className={`${styles.viewButton} ${view === 'month' ? styles.activeView : ''}`}
+              onClick={() => setView('month')}
+              title="Monthly View"
+            >
               <CalendarIcon size={18} />
               <span>Month</span>
             </button>
-            <button className={`${styles.viewButton} ${view === 'year' ? styles.activeView : ''}`} onClick={() => setView('year')} title="Yearly View">
+            <button 
+              className={`${styles.viewButton} ${view === 'year' ? styles.activeView : ''}`}
+              onClick={() => setView('year')}
+              title="Yearly View"
+            >
               <ListChecks size={18} />
               <span>Year</span>
             </button>
           </div>
+          
           <div className={styles.controls}>
             <button onClick={handlePrevious}>&lt; Previous</button>
             <button onClick={handleNext}>Next &gt;</button>
           </div>
         </div>
+        
         {renderCalendarView()}
       </div>
+
       {showTaskForm && (
         <div className={styles.taskFormOverlay} onClick={closeTaskForm}>
           <div className={styles.taskFormWrapper} onClick={(e) => e.stopPropagation()}>

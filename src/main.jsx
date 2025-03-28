@@ -1,6 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import { AuthProvider } from './contexts/AuthContext';
+import { TasksProvider } from './contexts/TasksContext';
 import './index.css';
 
 // Error boundary for catching and displaying render errors
@@ -59,10 +61,14 @@ try {
   
   root.render(
     <React.StrictMode>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </React.StrictMode>
+    <ErrorBoundary>
+      <AuthProvider>
+        <TasksProvider>
+          <App />
+        </TasksProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  </React.StrictMode>
   );
 } catch (error) {
   console.error("Fatal error during initialization:", error);

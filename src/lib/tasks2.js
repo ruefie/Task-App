@@ -1,19 +1,28 @@
-// src/lib/tasks.js
 import { supabase } from './supabase';
 
 export const tasksService = {
   async createTask(taskData) {
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
+      
       if (userError) {
         console.error('Error getting user:', userError);
         throw userError;
       }
+      
       if (!userData || !userData.user) {
+        console.error('User not authenticated');
         throw new Error('User not authenticated');
       }
+      
       console.log('Creating task with user ID:', userData.user.id);
-      const { attachments, timerEntries, timeSpent, isTimerRunning, ...taskDataToSave } = taskData;
+      
+      // Extract only the fields that should be sent to the database
+      const { 
+        attachments, timerEntries, timeSpent, isTimerRunning, ...taskDataToSave 
+      } = taskData;
+      
+      // Create task without attachments first
       const { data: task, error } = await supabase
         .from('tasks')
         .insert([{
@@ -27,11 +36,14 @@ export const tasksService = {
         console.error('Supabase error creating task:', error);
         throw error;
       }
+      
+      // Handle attachments if any
       if (attachments && attachments.length > 0) {
         for (const attachment of attachments) {
           await this.addAttachment(task.id, attachment);
         }
       }
+      
       return task;
     } catch (error) {
       console.error('Error creating task:', error);
@@ -41,8 +53,13 @@ export const tasksService = {
 
   async updateTask(taskId, taskData) {
     try {
-      const { attachments, timerEntries, timeSpent, isTimerRunning, id, created_at, updated_at, user_id, _prevMilestone, ...updateData } = taskData;
+      // Remove properties that shouldn't be directly updated
+      const { 
+        attachments, timerEntries, timeSpent, isTimerRunning, id, created_at, updated_at, user_id, ...updateData 
+      } = taskData;
+      
       console.log('Updating task with data:', updateData);
+      
       const { data: task, error } = await supabase
         .from('tasks')
         .update({
@@ -57,17 +74,23 @@ export const tasksService = {
         console.error('Supabase error updating task:', error);
         throw error;
       }
+      
+      // Handle attachments if they were updated
       if (attachments && attachments.length > 0) {
+        // First delete existing attachments
         await supabase
           .from('task_attachments')
           .delete()
           .eq('task_id', taskId);
+          
+        // Then add new ones
         for (const attachment of attachments) {
-          if (!attachment.id) {
+          if (!attachment.id) { // Only add if it's a new attachment
             await this.addAttachment(taskId, attachment);
           }
         }
       }
+      
       return task;
     } catch (error) {
       console.error('Error updating task:', error);
@@ -77,14 +100,17 @@ export const tasksService = {
 
   async deleteTask(taskId) {
     try {
+      // Delete task (attachments and timer entries will be deleted via cascade)
       const { error } = await supabase
         .from('tasks')
         .delete()
         .eq('id', taskId);
+
       if (error) {
         console.error('Supabase error deleting task:', error);
         throw error;
       }
+      
       return { success: true };
     } catch (error) {
       console.error('Error deleting task:', error);
@@ -92,27 +118,23 @@ export const tasksService = {
     }
   },
 
-  // In tasksService.js
-async getTasks(isAdmin=true) {
-  try {
-    if (isAdmin) {
-      // Fetch all tasks for admin
-      const { data, error } = await supabase
-        .from('tasks')
-        .select(`
-          *,
-          task_attachments (*),
-          timer_entries (*)
-        `)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    } else {
-      // Fetch only tasks for the logged-in user
+  async getTasks() {
+    try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-      if (!userData || !userData.user) throw new Error('User not authenticated');
-      const { data, error } = await supabase
+      
+      if (userError) {
+        console.error('Error getting user:', userError);
+        throw userError;
+      }
+      
+      if (!userData || !userData.user) {
+        console.error('User not authenticated');
+        throw new Error('User not authenticated');
+      }
+      
+      console.log('Getting tasks for user ID:', userData.user.id);
+      
+      const { data: tasks, error } = await supabase
         .from('tasks')
         .select(`
           *,
@@ -121,16 +143,18 @@ async getTasks(isAdmin=true) {
         `)
         .eq('user_id', userData.user.id)
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    }
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    throw error;
-  }
-},
 
-  
+      if (error) {
+        console.error('Supabase error getting tasks:', error);
+        throw error;
+      }
+      
+      return tasks || [];
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      throw error;
+    }
+  },
 
   async addAttachment(taskId, attachment) {
     try {
@@ -145,10 +169,12 @@ async getTasks(isAdmin=true) {
         }])
         .select()
         .single();
+
       if (error) {
         console.error('Supabase error adding attachment:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error adding attachment:', error);
@@ -166,10 +192,12 @@ async getTasks(isAdmin=true) {
         }])
         .select()
         .single();
+
       if (error) {
         console.error('Supabase error starting timer:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error starting timer:', error);
@@ -180,6 +208,7 @@ async getTasks(isAdmin=true) {
   async stopTimer(entryId, duration) {
     try {
       const endTime = new Date().toISOString();
+      
       const { data, error } = await supabase
         .from('timer_entries')
         .update({
@@ -189,14 +218,16 @@ async getTasks(isAdmin=true) {
         .eq('id', entryId)
         .select()
         .single();
+
       if (error) {
         console.error('Supabase error stopping timer:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error stopping timer:', error);
       throw error;
     }
-  },
+  }
 };

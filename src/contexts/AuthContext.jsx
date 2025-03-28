@@ -46,7 +46,6 @@ export function AuthProvider({ children }) {
     }
   };
   
-
   useEffect(() => {
     let isMounted = true;
     const initAuth = async () => {
@@ -140,32 +139,26 @@ export function AuthProvider({ children }) {
           console.log("Sign up successful:", result.data);
           if (result.data.user && data.options?.data) {
             try {
-              // First, try to get the profile for the user
               let profileData;
               try {
                 profileData = await profilesService.getProfile(result.data.user.id);
               } catch (getError) {
-                // If no profile is found, we'll assume it doesn't exist
                 profileData = null;
               }
               if (profileData) {
-                // If a profile exists, update it with the new metadata
                 console.log("Profile already exists, updating metadata");
                 await profilesService.updateProfile({
                   first_name: data.options.data.first_name,
                   last_name: data.options.data.last_name,
                 });
               } else {
-                // If no profile exists, create one
                 await profilesService.createProfile(result.data.user.id, data.options.data);
                 console.log("Profile created with metadata:", data.options.data);
               }
             } catch (profileError) {
               console.error("Error in profile creation/updating:", profileError);
-              // Optionally, setError(profileError.message);
             }
           }
-          // Force sign out after registration so the user is not auto-logged in.
           const { error: signOutError } = await supabase.auth.signOut();
           if (signOutError) {
             console.error("Error during sign out after registration:", signOutError);
@@ -251,4 +244,5 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// export const useAuth = () => useContext(AuthContext);
+// export default AuthContext;
+// export { useAuth, AuthProvider };

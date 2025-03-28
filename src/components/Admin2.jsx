@@ -1,4 +1,3 @@
-// src/components/AdminPanel.jsx
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../lib/admin';
 import { 
@@ -49,6 +48,7 @@ function AdminPanel() {
   const [sortField, setSortField] = useState('');
   const [sortDirection, setSortDirection] = useState('asc');
 
+
   const { isAdmin } = useAuth();
   const [adminState, setAdminState] = useState({
     isAdmin,
@@ -57,8 +57,10 @@ function AdminPanel() {
   });
 
   useEffect(() => {
+    // This helps debug why admin panel might not be showing
     console.log("AdminPanel component mounted");
     console.log("isAdmin status:", isAdmin);
+    
     setAdminState({
       isAdmin,
       loading: false,
@@ -68,7 +70,10 @@ function AdminPanel() {
 
   if (!isAdmin) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div style={{ 
+        padding: '2rem', 
+        textAlign: 'center' 
+      }}>
         <h2>Access Denied</h2>
         <p>You don't have permission to access the admin panel.</p>
         <p>isAdmin value: {String(isAdmin)}</p>
@@ -84,6 +89,7 @@ function AdminPanel() {
   const loadData = async () => {
     setLoading(true);
     setError(null);
+    
     try {
       if (activeTab === 'employees') {
         const employeesData = await adminService.getEmployees();
@@ -111,6 +117,8 @@ function AdminPanel() {
 
   const getSortedData = () => {
     let data = activeTab === 'employees' ? [...employees] : [...customers];
+    
+    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       data = data.filter(item => {
@@ -130,17 +138,22 @@ function AdminPanel() {
         }
       });
     }
+    
+    // Sort data
     if (sortField) {
       data.sort((a, b) => {
         let aValue = a[sortField] || '';
         let bValue = b[sortField] || '';
+        
         if (typeof aValue === 'string') aValue = aValue.toLowerCase();
         if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+        
         if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
     }
+    
     return data;
   };
 
@@ -152,6 +165,7 @@ function AdminPanel() {
       phone: '',
       position: ''
     });
+    
     setCustomerFormData({
       name: '',
       contact_person: '',
@@ -159,6 +173,7 @@ function AdminPanel() {
       phone: '',
       address: ''
     });
+    
     setEditingEmployee(null);
     setEditingCustomer(null);
     setShowEmployeeForm(false);
@@ -169,6 +184,7 @@ function AdminPanel() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    
     try {
       if (editingEmployee) {
         await adminService.updateEmployee(editingEmployee.id, employeeFormData);
@@ -177,7 +193,12 @@ function AdminPanel() {
         await adminService.createEmployee(employeeFormData);
         setSuccess('Employee created successfully');
       }
-      setTimeout(() => setSuccess(null), 3000);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
+      
       resetForms();
       loadData();
     } catch (error) {
@@ -190,6 +211,7 @@ function AdminPanel() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    
     try {
       if (editingCustomer) {
         await adminService.updateCustomer(editingCustomer.id, customerFormData);
@@ -198,7 +220,11 @@ function AdminPanel() {
         await adminService.createCustomer(customerFormData);
         setSuccess('Customer created successfully');
       }
-      setTimeout(() => setSuccess(null), 3000);
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
+      
       resetForms();
       loadData();
     } catch (error) {
@@ -233,12 +259,17 @@ function AdminPanel() {
 
   const handleDeleteEmployee = async (id) => {
     if (!window.confirm('Are you sure you want to delete this employee?')) return;
+    
     setError(null);
     setSuccess(null);
+    
     try {
       await adminService.deleteEmployee(id);
       setSuccess('Employee deleted successfully');
-      setTimeout(() => setSuccess(null), 3000);
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
       loadData();
     } catch (error) {
       console.error('Error deleting employee:', error);
@@ -248,12 +279,17 @@ function AdminPanel() {
 
   const handleDeleteCustomer = async (id) => {
     if (!window.confirm('Are you sure you want to delete this customer?')) return;
+    
     setError(null);
     setSuccess(null);
+    
     try {
       await adminService.deleteCustomer(id);
       setSuccess('Customer deleted successfully');
-      setTimeout(() => setSuccess(null), 3000);
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
       loadData();
     } catch (error) {
       console.error('Error deleting customer:', error);
@@ -264,25 +300,43 @@ function AdminPanel() {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Admin Panel</h1>
-      {error && <div className={styles.error}>{error}</div>}
-      {success && <div className={styles.success}>{success}</div>}
+      
+      {error && (
+        <div className={styles.error}>
+          {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className={styles.success}>
+          {success}
+        </div>
+      )}
+      
       <div className={styles.panel}>
         <div className={styles.tabs}>
           <button
             className={`${styles.tab} ${activeTab === 'employees' ? styles.activeTab : ''}`}
-            onClick={() => { setActiveTab('employees'); resetForms(); }}
+            onClick={() => {
+              setActiveTab('employees');
+              resetForms();
+            }}
           >
             <Users className={styles.tabIcon} />
             Employees
           </button>
           <button
             className={`${styles.tab} ${activeTab === 'customers' ? styles.activeTab : ''}`}
-            onClick={() => { setActiveTab('customers'); resetForms(); }}
+            onClick={() => {
+              setActiveTab('customers');
+              resetForms();
+            }}
           >
             <Building className={styles.tabIcon} />
             Customers
           </button>
         </div>
+        
         <div className={styles.content}>
           <div className={styles.toolbar}>
             <div className={styles.search}>
@@ -295,16 +349,29 @@ function AdminPanel() {
                 className={styles.searchInput}
               />
             </div>
+            
             <button
               onClick={() => {
                 if (activeTab === 'employees') {
                   setShowEmployeeForm(true);
                   setEditingEmployee(null);
-                  setEmployeeFormData({ first_name: '', last_name: '', email: '', phone: '', position: '' });
+                  setEmployeeFormData({
+                    first_name: '',
+                    last_name: '',
+                    email: '',
+                    phone: '',
+                    position: ''
+                  });
                 } else {
                   setShowCustomerForm(true);
                   setEditingCustomer(null);
-                  setCustomerFormData({ name: '', contact_person: '', email: '', phone: '', address: '' });
+                  setCustomerFormData({
+                    name: '',
+                    contact_person: '',
+                    email: '',
+                    phone: '',
+                    address: ''
+                  });
                 }
               }}
               className={styles.addButton}
@@ -313,6 +380,7 @@ function AdminPanel() {
               Add {activeTab === 'employees' ? 'Employee' : 'Customer'}
             </button>
           </div>
+          
           {activeTab === 'employees' && (
             <>
               {showEmployeeForm && (
@@ -321,73 +389,101 @@ function AdminPanel() {
                     <h3 className={styles.formTitle}>
                       {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
                     </h3>
-                    <button onClick={() => setShowEmployeeForm(false)} className={styles.closeButton}>
+                    <button
+                      onClick={() => setShowEmployeeForm(false)}
+                      className={styles.closeButton}
+                    >
                       <X className={styles.closeIcon} />
                     </button>
                   </div>
+                  
                   <form onSubmit={handleEmployeeSubmit} className={styles.form}>
                     <div className={styles.formGrid}>
                       <div className={styles.formGroup}>
-                        <label htmlFor="first_name" className={styles.label}>First name</label>
+                        <label htmlFor="first_name" className={styles.label}>
+                          First name
+                        </label>
                         <input
                           type="text"
                           name="first_name"
                           id="first_name"
                           required
                           value={employeeFormData.first_name}
-                          onChange={(e) => setEmployeeFormData({ ...employeeFormData, first_name: e.target.value })}
+                          onChange={(e) => setEmployeeFormData({...employeeFormData, first_name: e.target.value})}
                           className={styles.input}
                         />
                       </div>
+
                       <div className={styles.formGroup}>
-                        <label htmlFor="last_name" className={styles.label}>Last name</label>
+                        <label htmlFor="last_name" className={styles.label}>
+                          Last name
+                        </label>
                         <input
                           type="text"
                           name="last_name"
                           id="last_name"
                           required
                           value={employeeFormData.last_name}
-                          onChange={(e) => setEmployeeFormData({ ...employeeFormData, last_name: e.target.value })}
+                          onChange={(e) => setEmployeeFormData({...employeeFormData, last_name: e.target.value})}
                           className={styles.input}
                         />
                       </div>
+
                       <div className={styles.formGroup}>
-                        <label htmlFor="email" className={styles.label}>Email</label>
+                        <label htmlFor="email" className={styles.label}>
+                          Email
+                        </label>
                         <input
                           type="email"
                           name="email"
                           id="email"
                           value={employeeFormData.email}
-                          onChange={(e) => setEmployeeFormData({ ...employeeFormData, email: e.target.value })}
+                          onChange={(e) => setEmployeeFormData({...employeeFormData, email: e.target.value})}
                           className={styles.input}
                         />
                       </div>
+
                       <div className={styles.formGroup}>
-                        <label htmlFor="phone" className={styles.label}>Phone</label>
+                        <label htmlFor="phone" className={styles.label}>
+                          Phone
+                        </label>
                         <input
                           type="text"
                           name="phone"
                           id="phone"
                           value={employeeFormData.phone}
-                          onChange={(e) => setEmployeeFormData({ ...employeeFormData, phone: e.target.value })}
+                          onChange={(e) => setEmployeeFormData({...employeeFormData, phone: e.target.value})}
                           className={styles.input}
                         />
                       </div>
+
                       <div className={styles.formGroupFull}>
-                        <label htmlFor="position" className={styles.label}>Position</label>
+                        <label htmlFor="position" className={styles.label}>
+                          Position
+                        </label>
                         <input
                           type="text"
                           name="position"
                           id="position"
                           value={employeeFormData.position}
-                          onChange={(e) => setEmployeeFormData({ ...employeeFormData, position: e.target.value })}
+                          onChange={(e) => setEmployeeFormData({...employeeFormData, position: e.target.value})}
                           className={styles.input}
                         />
                       </div>
                     </div>
+                    
                     <div className={styles.formActions}>
-                      <button type="button" onClick={() => setShowEmployeeForm(false)} className={styles.cancelButton}>Cancel</button>
-                      <button type="submit" className={styles.saveButton}>
+                      <button
+                        type="button"
+                        onClick={() => setShowEmployeeForm(false)}
+                        className={styles.cancelButton}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className={styles.saveButton}
+                      >
                         <Save className={styles.buttonIcon} />
                         {editingEmployee ? 'Update' : 'Save'}
                       </button>
@@ -395,11 +491,15 @@ function AdminPanel() {
                   </form>
                 </div>
               )}
+              
               <div className={styles.tableContainer}>
                 <table className={styles.table}>
                   <thead className={styles.tableHeader}>
                     <tr>
-                      <th className={styles.tableHeaderCell} onClick={() => handleSort('first_name')}>
+                      <th
+                        className={styles.tableHeaderCell}
+                        onClick={() => handleSort('first_name')}
+                      >
                         <div className={styles.headerContent}>
                           Name
                           {sortField === 'first_name' && (
@@ -407,7 +507,10 @@ function AdminPanel() {
                           )}
                         </div>
                       </th>
-                      <th className={styles.tableHeaderCell} onClick={() => handleSort('email')}>
+                      <th
+                        className={styles.tableHeaderCell}
+                        onClick={() => handleSort('email')}
+                      >
                         <div className={styles.headerContent}>
                           Email
                           {sortField === 'email' && (
@@ -415,7 +518,10 @@ function AdminPanel() {
                           )}
                         </div>
                       </th>
-                      <th className={styles.tableHeaderCell} onClick={() => handleSort('position')}>
+                      <th
+                        className={styles.tableHeaderCell}
+                        onClick={() => handleSort('position')}
+                      >
                         <div className={styles.headerContent}>
                           Position
                           {sortField === 'position' && (
@@ -423,18 +529,28 @@ function AdminPanel() {
                           )}
                         </div>
                       </th>
-                      <th className={styles.tableHeaderCell}>Phone</th>
-                      <th className={styles.tableHeaderCell}><span className={styles.srOnly}>Actions</span></th>
+                      <th
+                        className={styles.tableHeaderCell}
+                      >
+                        Phone
+                      </th>
+                      <th className={styles.tableHeaderCell}>
+                        <span className={styles.srOnly}>Actions</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan="5" className={styles.loadingCell}>Loading...</td>
+                        <td colSpan="5" className={styles.loadingCell}>
+                          Loading...
+                        </td>
                       </tr>
                     ) : getSortedData().length === 0 ? (
                       <tr>
-                        <td colSpan="5" className={styles.emptyCell}>No employees found</td>
+                        <td colSpan="5" className={styles.emptyCell}>
+                          No employees found
+                        </td>
                       </tr>
                     ) : (
                       getSortedData().map((employee) => (
@@ -454,10 +570,16 @@ function AdminPanel() {
                             <div className={styles.phoneCell}>{employee.phone}</div>
                           </td>
                           <td className={styles.actionCell}>
-                            <button onClick={() => handleEditEmployee(employee)} className={styles.editAction}>
+                            <button
+                              onClick={() => handleEditEmployee(employee)}
+                              className={styles.editAction}
+                            >
                               <Edit2 className={styles.actionIcon} />
                             </button>
-                            <button onClick={() => handleDeleteEmployee(employee.id)} className={styles.deleteAction}>
+                            <button
+                              onClick={() => handleDeleteEmployee(employee.id)}
+                              className={styles.deleteAction}
+                            >
                               <Trash2 className={styles.actionIcon} />
                             </button>
                           </td>
@@ -478,72 +600,100 @@ function AdminPanel() {
                     <h3 className={styles.formTitle}>
                       {editingCustomer ? 'Edit Customer' : 'Add New Customer'}
                     </h3>
-                    <button onClick={() => setShowCustomerForm(false)} className={styles.closeButton}>
+                    <button
+                      onClick={() => setShowCustomerForm(false)}
+                      className={styles.closeButton}
+                    >
                       <X className={styles.closeIcon} />
                     </button>
                   </div>
+                  
                   <form onSubmit={handleCustomerSubmit} className={styles.form}>
                     <div className={styles.formGrid}>
                       <div className={styles.formGroupFull}>
-                        <label htmlFor="name" className={styles.label}>Company Name</label>
+                        <label htmlFor="name" className={styles.label}>
+                          Company Name
+                        </label>
                         <input
                           type="text"
                           name="name"
                           id="name"
                           required
                           value={customerFormData.name}
-                          onChange={(e) => setCustomerFormData({ ...customerFormData, name: e.target.value })}
+                          onChange={(e) => setCustomerFormData({...customerFormData, name: e.target.value})}
                           className={styles.input}
                         />
                       </div>
+
                       <div className={styles.formGroup}>
-                        <label htmlFor="contact_person" className={styles.label}>Contact Person</label>
+                        <label htmlFor="contact_person" className={styles.label}>
+                          Contact Person
+                        </label>
                         <input
                           type="text"
                           name="contact_person"
                           id="contact_person"
                           value={customerFormData.contact_person}
-                          onChange={(e) => setCustomerFormData({ ...customerFormData, contact_person: e.target.value })}
+                          onChange={(e) => setCustomerFormData({...customerFormData, contact_person: e.target.value})}
                           className={styles.input}
                         />
                       </div>
+
                       <div className={styles.formGroup}>
-                        <label htmlFor="email" className={styles.label}>Email</label>
+                        <label htmlFor="email" className={styles.label}>
+                          Email
+                        </label>
                         <input
                           type="email"
                           name="email"
                           id="email"
                           value={customerFormData.email}
-                          onChange={(e) => setCustomerFormData({ ...customerFormData, email: e.target.value })}
+                          onChange={(e) => setCustomerFormData({...customerFormData, email: e.target.value})}
                           className={styles.input}
                         />
                       </div>
+
                       <div className={styles.formGroup}>
-                        <label htmlFor="phone" className={styles.label}>Phone</label>
+                        <label htmlFor="phone" className={styles.label}>
+                          Phone
+                        </label>
                         <input
                           type="text"
                           name="phone"
                           id="phone"
                           value={customerFormData.phone}
-                          onChange={(e) => setCustomerFormData({ ...customerFormData, phone: e.target.value })}
+                          onChange={(e) => setCustomerFormData({...customerFormData, phone: e.target.value})}
                           className={styles.input}
                         />
                       </div>
+
                       <div className={styles.formGroupFull}>
-                        <label htmlFor="address" className={styles.label}>Address</label>
+                        <label htmlFor="address" className={styles.label}>
+                          Address
+                        </label>
                         <textarea
                           name="address"
                           id="address"
                           rows="3"
                           value={customerFormData.address}
-                          onChange={(e) => setCustomerFormData({ ...customerFormData, address: e.target.value })}
+                          onChange={(e) => setCustomerFormData({...customerFormData, address: e.target.value})}
                           className={styles.textarea}
                         ></textarea>
                       </div>
                     </div>
+                    
                     <div className={styles.formActions}>
-                      <button type="button" onClick={() => setShowCustomerForm(false)} className={styles.cancelButton}>Cancel</button>
-                      <button type="submit" className={styles.saveButton}>
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomerForm(false)}
+                        className={styles.cancelButton}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className={styles.saveButton}
+                      >
                         <Save className={styles.buttonIcon} />
                         {editingCustomer ? 'Update' : 'Save'}
                       </button>
@@ -551,11 +701,15 @@ function AdminPanel() {
                   </form>
                 </div>
               )}
+              
               <div className={styles.tableContainer}>
                 <table className={styles.table}>
                   <thead className={styles.tableHeader}>
                     <tr>
-                      <th className={styles.tableHeaderCell} onClick={() => handleSort('name')}>
+                      <th
+                        className={styles.tableHeaderCell}
+                        onClick={() => handleSort('name')}
+                      >
                         <div className={styles.headerContent}>
                           Company Name
                           {sortField === 'name' && (
@@ -563,7 +717,10 @@ function AdminPanel() {
                           )}
                         </div>
                       </th>
-                      <th className={styles.tableHeaderCell} onClick={() => handleSort('contact_person')}>
+                      <th
+                        className={styles.tableHeaderCell}
+                        onClick={() => handleSort('contact_person')}
+                      >
                         <div className={styles.headerContent}>
                           Contact Person
                           {sortField === 'contact_person' && (
@@ -571,7 +728,10 @@ function AdminPanel() {
                           )}
                         </div>
                       </th>
-                      <th className={styles.tableHeaderCell} onClick={() => handleSort('email')}>
+                      <th
+                        className={styles.tableHeaderCell}
+                        onClick={() => handleSort('email')}
+                      >
                         <div className={styles.headerContent}>
                           Email
                           {sortField === 'email' && (
@@ -579,18 +739,28 @@ function AdminPanel() {
                           )}
                         </div>
                       </th>
-                      <th className={styles.tableHeaderCell}>Phone</th>
-                      <th className={styles.tableHeaderCell}><span className={styles.srOnly}>Actions</span></th>
+                      <th
+                        className={styles.tableHeaderCell}
+                      >
+                        Phone
+                      </th>
+                      <th className={styles.tableHeaderCell}>
+                        <span className={styles.srOnly}>Actions</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan="5" className={styles.loadingCell}>Loading...</td>
+                        <td colSpan="5" className={styles.loadingCell}>
+                          Loading...
+                        </td>
                       </tr>
                     ) : getSortedData().length === 0 ? (
                       <tr>
-                        <td colSpan="5" className={styles.emptyCell}>No customers found</td>
+                        <td colSpan="5" className={styles.emptyCell}>
+                          No customers found
+                        </td>
                       </tr>
                     ) : (
                       getSortedData().map((customer) => (
@@ -608,10 +778,16 @@ function AdminPanel() {
                             <div className={styles.phoneCell}>{customer.phone}</div>
                           </td>
                           <td className={styles.actionCell}>
-                            <button onClick={() => handleEditCustomer(customer)} className={styles.editAction}>
+                            <button
+                              onClick={() => handleEditCustomer(customer)}
+                              className={styles.editAction}
+                            >
                               <Edit2 className={styles.actionIcon} />
                             </button>
-                            <button onClick={() => handleDeleteCustomer(customer.id)} className={styles.deleteAction}>
+                            <button
+                              onClick={() => handleDeleteCustomer(customer.id)}
+                              className={styles.deleteAction}
+                            >
                               <Trash2 className={styles.actionIcon} />
                             </button>
                           </td>

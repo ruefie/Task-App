@@ -1,82 +1,79 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Clock, CheckSquare, AlertTriangle } from 'lucide-react';
-import { tasksService } from '../lib/tasks';
-import styles from '../styles/Home.module.scss';
+// src/components/Home.jsx
+import React, { useMemo } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useTasks } from "../contexts/TasksContext";
+import { Clock, CheckSquare, AlertTriangle,RefreshCw  } from "lucide-react";
+import styles from "../styles/Home.module.scss";
 
 function Home() {
-  const { user } = useAuth();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { user, profile } = useAuth();
+  const { tasks, loading, error, loadTasks } = useTasks();
 
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const tasksData = await tasksService.getTasks();
-        console.log('Home - Loaded tasks:', tasksData?.length || 0);
-        setTasks(tasksData?.map(task => ({
-          ...task,
-          timeSpent: calculateTotalTimeSpent(task.timer_entries || []),
-          timerEntries: task.timer_entries || []
-        })) || []);
-      } catch (error) {
-        console.error('Error loading tasks:', error);
-        setError('Failed to load tasks. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTasks();
-  }, []);
-
+  // Helper: compute total time (in seconds) from timer entries.
+  // If the entry.duration exists, it is used (converted to number),
+  // otherwise the time difference from start_time to end_time (or now if still running) is calculated.
   const calculateTotalTimeSpent = (timerEntries) => {
     if (!timerEntries || timerEntries.length === 0) return 0;
-    
     return timerEntries.reduce((total, entry) => {
-      if (entry.duration) {
-        return total + entry.duration;
+      if (!entry.start_time) return total;
+      // Use the duration field if it exists (ensuring it's a number)
+      if (entry.duration != null && Number(entry.duration) > 0) {
+        return total + Number(entry.duration);
       }
-      if (entry.end_time) {
-        return total + Math.floor((new Date(entry.end_time) - new Date(entry.start_time)) / 1000);
-      }
-      if (!entry.end_time) {
-        return total + Math.floor((new Date() - new Date(entry.start_time)) / 1000);
-      }
-      return total;
+      // Otherwise, compute the difference between end_time (or now if missing) and start_time.
+      const start = new Date(entry.start_time).getTime();
+      const end = entry.end_time
+        ? new Date(entry.end_time).getTime()
+        : Date.now();
+      return total + Math.floor((end - start) / 1000);
     }, 0);
   };
 
-  // Calculate task statistics
-  const taskStats = useMemo(() => {
-    return {
-      total: tasks.length,
-      completed: tasks.filter(task => task.completed).length,
-      urgent: tasks.filter(task => task.priority === 'Urgent').length,
-      totalTime: tasks.reduce((total, task) => total + (task.timeSpent || 0), 0)
-    };
-  }, [tasks]);
+  // Map tasks to include a computedTime property based on their timer entries.
+  // We assume that each task has a "timer_entries" property (as provided by TasksContext).
+  const tasksWithTime = tasks.map((task) => ({
+    ...task,
+    computedTime: calculateTotalTimeSpent(task.timer_entries || []),
+  }));
 
+  // Compute stats based on tasksWithTime.
+  const taskStats = useMemo(
+    () => ({
+      total: tasksWithTime.length,
+      completed: tasksWithTime.filter((task) => task.completed).length,
+      urgent: tasksWithTime.filter((task) => task.priority === "Urgent").length,
+      totalTime: tasksWithTime.reduce(
+        (total, task) => total + task.computedTime,
+        0
+      ),
+    }),
+    [tasksWithTime]
+  );
+
+  // Format seconds into a string like "Xh Ym"
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    const secondsLeft = seconds % 60;
+    return `${hours}h ${minutes}m ${secondsLeft}s`;
   };
 
   return (
     <div className={styles.container}>
-      <h1>Welcome back!</h1>
-      <p className={styles.email}>{user?.email}</p>
-      
+      <div className={styles.header}>
+  <h1>Hallo {profile?.first_name}!</h1>
+  <button onClick={loadTasks} className={styles.refreshButton}>
+    <RefreshCw size={16} />
+    Refresh
+  </button>
+</div>
+
       {error && <p className={styles.error}>{error}</p>}
-      
+
       {loading ? (
-        <p>Loading your tasks...</p>
+        <p className={styles.homeLoading}>Loading your tasks...</p>
       ) : (
-        <div className={styles.grid}>
+        <div className={styles.homeGrid}>
           <div className={styles.card}>
             <h2>Task Overview</h2>
             <div className={styles.stats}>
@@ -84,7 +81,9 @@ function Home() {
                 <CheckSquare size={20} />
                 <div>
                   <h3>Tasks</h3>
-                  <p>{taskStats.completed} / {taskStats.total} completed</p>
+                  <p>
+                    {taskStats.completed} / {taskStats.total} completed
+                  </p>
                 </div>
               </div>
               <div className={styles.statItem}>
@@ -97,31 +96,34 @@ function Home() {
               <div className={styles.statItem}>
                 <Clock size={20} />
                 <div>
-                  <h3>Time Tracked</h3>
+                  <h3>Total Time Tracked</h3>
                   <p>{formatTime(taskStats.totalTime)}</p>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div className={styles.card}>
             <h2>Recent Tasks</h2>
-            {tasks.length === 0 ? (
+            {tasksWithTime.length === 0 ? (
               <p>No tasks yet. Add some tasks to get started!</p>
             ) : (
               <div className={styles.recentTasks}>
-                {tasks.slice(0, 5).map(task => (
-                  <div key={task.id} className={styles.taskItem}>
+                {tasksWithTime.slice(0, 5).map((task) => (
+                  <div key={task.id}
+                  className={`${styles.taskItem} ${styles[task.priority?.toLowerCase() || "normal"]}`}>
                     <div className={styles.taskHeader}>
                       <h3>{task.name}</h3>
-                      <span className={`${styles.tag} ${styles[task.priority?.toLowerCase() || 'normal']}`}>
-                        {task.priority || 'Normal'}
+                      <span
+                        className={`${styles.tag} ${styles[task.priority?.toLowerCase() || "normal"]}`}
+                      >
+                        {task.priority || "Normal"}
                       </span>
                     </div>
                     <div className={styles.taskMeta}>
-                      <span>{task.project || 'No project'}</span>
+                      <span>{task.project || "No project"}</span>
                       <span>•</span>
-                      <span>Due: {task.due_date || 'Not set'}</span>
+                      <span>Due: {task.due_date || "Not set"}</span>
                     </div>
                   </div>
                 ))}

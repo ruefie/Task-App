@@ -328,6 +328,7 @@ BEGIN
       last_name = 'User',
       is_admin = true;
       
+      
     -- Create sample customers
     INSERT INTO customers (name, contact_person, email, phone, address)
     VALUES 

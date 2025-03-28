@@ -1,4 +1,3 @@
-// src/lib/admin.js
 import { supabase } from './supabase';
 
 export const adminService = {
@@ -9,10 +8,12 @@ export const adminService = {
         .from('customers')
         .select('*')
         .order('name');
+
       if (error) {
         console.error('Error fetching customers:', error);
         throw error;
       }
+      
       return data || [];
     } catch (error) {
       console.error('Error in getCustomers:', error);
@@ -27,10 +28,12 @@ export const adminService = {
         .select('*')
         .eq('id', id)
         .single();
+
       if (error) {
         console.error('Error fetching customer:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error in getCustomer:', error);
@@ -45,10 +48,12 @@ export const adminService = {
         .insert([customerData])
         .select()
         .single();
+
       if (error) {
         console.error('Error creating customer:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error in createCustomer:', error);
@@ -64,10 +69,12 @@ export const adminService = {
         .eq('id', id)
         .select()
         .single();
+
       if (error) {
         console.error('Error updating customer:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error in updateCustomer:', error);
@@ -81,10 +88,12 @@ export const adminService = {
         .from('customers')
         .delete()
         .eq('id', id);
+
       if (error) {
         console.error('Error deleting customer:', error);
         throw error;
       }
+      
       return { success: true };
     } catch (error) {
       console.error('Error in deleteCustomer:', error);
@@ -99,10 +108,12 @@ export const adminService = {
         .from('employees')
         .select('*')
         .order('last_name');
+
       if (error) {
         console.error('Error fetching employees:', error);
         throw error;
       }
+      
       return data || [];
     } catch (error) {
       console.error('Error in getEmployees:', error);
@@ -117,10 +128,12 @@ export const adminService = {
         .select('*')
         .eq('id', id)
         .single();
+
       if (error) {
         console.error('Error fetching employee:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error in getEmployee:', error);
@@ -135,10 +148,12 @@ export const adminService = {
         .insert([employeeData])
         .select()
         .single();
+
       if (error) {
         console.error('Error creating employee:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error in createEmployee:', error);
@@ -154,10 +169,12 @@ export const adminService = {
         .eq('id', id)
         .select()
         .single();
+
       if (error) {
         console.error('Error updating employee:', error);
         throw error;
       }
+      
       return data;
     } catch (error) {
       console.error('Error in updateEmployee:', error);
@@ -171,10 +188,12 @@ export const adminService = {
         .from('employees')
         .delete()
         .eq('id', id);
+
       if (error) {
         console.error('Error deleting employee:', error);
         throw error;
       }
+      
       return { success: true };
     } catch (error) {
       console.error('Error in deleteEmployee:', error);

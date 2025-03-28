@@ -29,9 +29,10 @@ $warning-color: #f59e0b;
 
 .summary {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
   
   .totalTime {
     display: flex;
@@ -42,6 +43,35 @@ $warning-color: #f59e0b;
     background-color: $hover-bg;
     padding: 0.5rem 0.75rem;
     border-radius: 0.375rem;
+  }
+}
+
+.refreshButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  color: #495057;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+  }
+
+  &:active {
+    background-color: #dee2e6;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
   }
 }
 
