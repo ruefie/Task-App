@@ -1,9 +1,15 @@
 import React from 'react';
 import { X, Paperclip, Clock } from 'lucide-react';
+import TaskComments from './TaskComments';
 import styles from '../../styles/Tasks.module.scss';
 
 function TaskDetails({ task, onClose, formatTime }) {
   if (!task) return null;
+
+  const handleAddComment = (taskId, comment) => {
+    // TODO: Implement comment handling
+    console.log('Adding comment:', comment, 'to task:', taskId);
+  };
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -77,6 +83,12 @@ function TaskDetails({ task, onClose, formatTime }) {
               )}
             </div>
           </div>
+
+          <TaskComments 
+            taskId={task.id}
+            comments={task.comments || []}
+            onAddComment={handleAddComment}
+          />
         </div>
       </div>
     </div>

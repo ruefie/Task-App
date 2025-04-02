@@ -1,7 +1,7 @@
 // src/components/Calendar.jsx
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Calendar as CalendarIcon, ListChecks, CalendarRange, CalendarDays } from 'lucide-react';
-import Tasks from './Tasks';
+import Tasks from './Tasks/Tasks.jsx';
 import { useAuth } from '../contexts/AuthContext';
 import { useTasks } from '../contexts/TasksContext';
 import styles from '../styles/Calendar.module.scss';

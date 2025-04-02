@@ -14,13 +14,11 @@ import {
 } from 'lucide-react';
 import { useTasks } from '../contexts/TasksContext';
 import { useAuth } from '../contexts/AuthContext';
-import TimeReports from './Tasks/TimeReports';
 import styles from '../styles/Home.module.scss';
 
 function Home() {
-  const { tasks, loadTasks, loading, error } = useTasks();
-  const { profile } = useAuth();
-  const [showTimeReports, setShowTimeReports] = useState(false);
+  const { tasks, loading, error, loadTasks } = useTasks();
+  const { profile, isAdmin } = useAuth();
   const [analytics, setAnalytics] = useState({
     overview: {
       totalTasks: 0,
@@ -52,6 +50,7 @@ function Home() {
     recentActivity: []
   });
 
+  // Add useEffect to load tasks when component mounts
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
@@ -159,7 +158,7 @@ function Home() {
 
     return activity
       .sort((a, b) => b.date - a.date)
-      .slice(0, 4);
+      .slice(0, 4); // Show 4 recent activities
   };
 
   const formatTime = (seconds) => {
@@ -190,35 +189,28 @@ function Home() {
         return styles.normal;
     }
   };
+  
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Hallo {profile?.first_name}!</h1>
-        <div className={styles.headerButtons}>
-          <button
-            onClick={() => setShowTimeReports(!showTimeReports)}
-            className={styles.analyticsToggle}
-          >
-            <Clock size={20} />
-            {showTimeReports ? 'Hide Time Reports' : 'Show Time Reports'}
-          </button>
-          <button 
-            onClick={loadTasks} 
-            className={styles.refreshButton}
-            disabled={loading}
-          >
-            <RefreshCw size={16} className={loading ? styles.spinning : ''} />
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </div>
+        <button 
+          onClick={loadTasks} 
+          className={styles.refreshButton}
+          disabled={loading}
+        >
+          <RefreshCw size={16} className={loading ? styles.spinning : ''} />
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
+      
 
       {error && <div className={styles.error}>{error}</div>}
-      
-      {showTimeReports && <TimeReports tasks={tasks} />}
+      {loading ? ( <p className={styles.homeLoading}>Loading your tasks...</p>): (
 
       <div className={styles.dashboard}>
+        {/* Overview Cards */}
         <div className={styles.overviewGrid}>
           <div className={styles.card}>
             <div className={styles.cardHeader}>
@@ -313,6 +305,7 @@ function Home() {
           </div>
         </div>
 
+        {/* Distribution Section */}
         <div className={styles.distributionSection}>
           <div className={styles.card}>
             <div className={styles.cardHeader}>
@@ -357,6 +350,7 @@ function Home() {
           </div>
         </div>
 
+        {/* Activity Section */}
         <div className={styles.activitySection}>
           <div className={styles.card}>
             <div className={styles.cardHeader}>
@@ -403,6 +397,7 @@ function Home() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

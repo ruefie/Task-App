@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon } from "lucide-react";
+import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon, BarChart2 } from "lucide-react";
 import { useTasks } from "../../contexts/TasksContext";
 import { tasksService } from "../../lib/tasks";
 import { supabase } from "../../lib/supabase";
@@ -9,6 +9,7 @@ import TaskForm from "./TaskForm";
 import TaskList from "./TaskList";
 import KanbanBoard from "./KanbanBoard";
 import TaskDetails from "./TaskDetails";
+import TaskAnalytics from "./TaskAnalytics";
 
 function Tasks({ onTaskAdded, initialTaskData }) {
   const { tasks, setTasks, loadTasks, error, loading } = useTasks();
@@ -19,8 +20,8 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   const [viewMode, setViewMode] = useState("kanban");
   const [selectedTask, setSelectedTask] = useState(null);
   const [timers, setTimers] = useState({});
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
-  // Load tasks on mount and when loadTasks changes
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
@@ -284,8 +285,21 @@ function Tasks({ onTaskAdded, initialTaskData }) {
 
   return (
     <div className={styles.container}>
-      <h1>Tasks</h1>
+      <div className={styles.header}>
+        <h1>Tasks</h1>
+        <button
+          onClick={() => setShowAnalytics(!showAnalytics)}
+          className={styles.analyticsToggle}
+        >
+          <BarChart2 size={20} />
+          {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+        </button>
+      </div>
+
       {error && <div className={styles.error}>{error}</div>}
+      
+      {showAnalytics && <TaskAnalytics tasks={tasks} />}
+
       <div className={styles.summary}>
         <div className={styles.totalTime}>
           <Clock size={20} />
