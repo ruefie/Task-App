@@ -1,9 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Clock, Calendar } from 'lucide-react';
 import styles from '../../styles/TimeReports.module.scss';
 
 function TimeReports({ tasks }) {
   const [timeRange, setTimeRange] = useState('week');
+  const [filteredTasks, setFilteredTasks] = useState([]);
+
+  useEffect(() => {
+    filterTasks();
+  }, [timeRange, tasks]);
+
+  const filterTasks = () => {
+    const now = new Date();
+    const filtered = tasks.filter(task => {
+      const taskDate = new Date(task.created_at);
+      if (timeRange === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return taskDate >= weekAgo;
+      } else {
+        const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        return taskDate >= monthAgo;
+      }
+    });
+    setFilteredTasks(filtered);
+  };
 
   const calculateTimeStats = () => {
     const stats = {
@@ -13,17 +33,12 @@ function TimeReports({ tasks }) {
       timeByUser: {}
     };
 
-    tasks.forEach(task => {
+    filteredTasks.forEach(task => {
       const taskTime = task.timeSpent || 0;
       stats.totalTime += taskTime;
       
-      // By project
       stats.timeByProject[task.project] = (stats.timeByProject[task.project] || 0) + taskTime;
-      
-      // By client
       stats.timeByClient[task.client] = (stats.timeByClient[task.client] || 0) + taskTime;
-      
-      // By user
       stats.timeByUser[task.assignee] = (stats.timeByUser[task.assignee] || 0) + taskTime;
     });
 
@@ -33,7 +48,8 @@ function TimeReports({ tasks }) {
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    const secs = seconds % 60;
+    return `${hours}h ${minutes}m ${secs}s`;
   };
 
   const stats = calculateTimeStats();

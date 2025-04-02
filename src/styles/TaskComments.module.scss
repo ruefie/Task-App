@@ -53,6 +53,14 @@
   line-height: 1.5;
 }
 
+.noComments {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-style: italic;
+  padding: 1rem;
+}
+
 .commentForm {
   display: flex;
   gap: 0.5rem;
@@ -68,7 +76,7 @@
   &:focus {
     outline: none;
     border-color: #3b82f6;
-    ring: 2px solid rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 }
 
@@ -90,5 +98,10 @@
 
   &:active {
     background-color: #1d4ed8;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }

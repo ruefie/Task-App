@@ -1,15 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Paperclip, Clock } from 'lucide-react';
 import TaskComments from './TaskComments';
+import { commentsService } from '../../lib/comments';
 import styles from '../../styles/Tasks.module.scss';
 
 function TaskDetails({ task, onClose, formatTime }) {
-  if (!task) return null;
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleAddComment = (taskId, comment) => {
-    // TODO: Implement comment handling
-    console.log('Adding comment:', comment, 'to task:', taskId);
+  useEffect(() => {
+    loadComments();
+  }, [task.id]);
+
+  const loadComments = async () => {
+    try {
+      setLoading(true);
+      const taskComments = await commentsService.getComments(task.id);
+      setComments(taskComments);
+    } catch (err) {
+      console.error('Error loading comments:', err);
+      setError('Failed to load comments');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleAddComment = async (taskId, content) => {
+    try {
+      const newComment = await commentsService.addComment(taskId, content);
+      setComments(prev => [...prev, newComment]);
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      setError('Failed to add comment');
+    }
+  };
+
+  if (!task) return null;
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -84,9 +111,11 @@ function TaskDetails({ task, onClose, formatTime }) {
             </div>
           </div>
 
+          {error && <div className={styles.error}>{error}</div>}
+          
           <TaskComments 
             taskId={task.id}
-            comments={task.comments || []}
+            comments={comments}
             onAddComment={handleAddComment}
           />
         </div>
