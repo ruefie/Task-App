@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  RefreshCw, 
-  Clock, 
-  BarChart2, 
-  TrendingUp, 
+import React, { useState, useEffect } from "react";
+import {
+  RefreshCw,
+  Clock,
+  BarChart2,
+  TrendingUp,
   Calendar as CalendarIcon,
   Users,
   Building2,
   AlertTriangle,
   CheckCircle2,
   Timer,
-  Activity
-} from 'lucide-react';
-import { useTasks } from '../contexts/TasksContext';
-import { useAuth } from '../contexts/AuthContext';
-import TimeReports from './Tasks/TimeReports';
-import styles from '../styles/Home.module.scss';
+  Activity,
+} from "lucide-react";
+import { useTasks } from "../contexts/TasksContext";
+import { useAuth } from "../contexts/AuthContext";
+import TimeReports from "./Tasks/TimeReports";
+import styles from "../styles/Home.module.scss";
 
 function Home() {
   const { tasks, loadTasks, loading, error } = useTasks();
@@ -49,7 +49,7 @@ function Home() {
       byMilestone: {},
     },
     upcoming: [],
-    recentActivity: []
+    recentActivity: [],
   });
 
   useEffect(() => {
@@ -65,38 +65,56 @@ function Home() {
     const stats = {
       overview: {
         totalTasks: tasks.length,
-        completedTasks: tasks.filter(t => t.completed).length,
-        inProgressTasks: tasks.filter(t => !t.completed && t.milestone === 'On Going').length,
-        upcomingTasks: tasks.filter(t => {
+        completedTasks: tasks.filter((t) => t.completed).length,
+        inProgressTasks: tasks.filter(
+          (t) => !t.completed && t.milestone === "On Going"
+        ).length,
+        upcomingTasks: tasks.filter((t) => {
           const dueDate = new Date(t.due_date);
-          return !t.completed && dueDate > now && dueDate <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          return (
+            !t.completed &&
+            dueDate > now &&
+            dueDate <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+          );
         }).length,
       },
       priorities: {
-        urgent: tasks.filter(t => t.priority === 'Urgent').length,
-        high: tasks.filter(t => t.priority === 'High').length,
-        normal: tasks.filter(t => t.priority === 'Normal').length,
+        urgent: tasks.filter((t) => t.priority === "Urgent").length,
+        high: tasks.filter((t) => t.priority === "High").length,
+        normal: tasks.filter((t) => t.priority === "Normal").length,
       },
       timeTracking: {
-        totalTime: tasks.reduce((total, task) => total + (task.timeSpent || 0), 0),
-        averageTime: tasks.length ? Math.floor(tasks.reduce((total, task) => total + (task.timeSpent || 0), 0) / tasks.length) : 0,
-        mostTimeConsuming: [...tasks].sort((a, b) => (b.timeSpent || 0) - (a.timeSpent || 0))[0],
+        totalTime: tasks.reduce(
+          (total, task) => total + (task.timeSpent || 0),
+          0
+        ),
+        averageTime: tasks.length
+          ? Math.floor(
+              tasks.reduce((total, task) => total + (task.timeSpent || 0), 0) /
+                tasks.length
+            )
+          : 0,
+        mostTimeConsuming: [...tasks].sort(
+          (a, b) => (b.timeSpent || 0) - (a.timeSpent || 0)
+        )[0],
       },
       performance: {
-        completionRate: tasks.length ? (tasks.filter(t => t.completed).length / tasks.length) * 100 : 0,
+        completionRate: tasks.length
+          ? (tasks.filter((t) => t.completed).length / tasks.length) * 100
+          : 0,
         onTimeCompletion: calculateOnTimeCompletion(tasks),
-        delayedTasks: tasks.filter(t => {
+        delayedTasks: tasks.filter((t) => {
           const dueDate = new Date(t.due_date);
           return !t.completed && dueDate < now;
         }).length,
       },
       distribution: {
-        byProject: groupBy(tasks, 'project'),
-        byClient: groupBy(tasks, 'client'),
-        byMilestone: groupBy(tasks, 'milestone'),
+        byProject: groupBy(tasks, "project"),
+        byClient: groupBy(tasks, "client"),
+        byMilestone: groupBy(tasks, "milestone"),
       },
       upcoming: tasks
-        .filter(t => !t.completed && new Date(t.due_date) > now)
+        .filter((t) => !t.completed && new Date(t.due_date) > now)
         .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
         .slice(0, 5),
       recentActivity: getRecentActivity(tasks),
@@ -106,10 +124,10 @@ function Home() {
   };
 
   const calculateOnTimeCompletion = (tasks) => {
-    const completedTasks = tasks.filter(t => t.completed);
+    const completedTasks = tasks.filter((t) => t.completed);
     if (!completedTasks.length) return 0;
-    
-    const onTime = completedTasks.filter(task => {
+
+    const onTime = completedTasks.filter((task) => {
       const completedDate = new Date(task.completed_at);
       const dueDate = new Date(task.due_date);
       return completedDate <= dueDate;
@@ -120,7 +138,7 @@ function Home() {
 
   const groupBy = (array, key) => {
     return array.reduce((result, item) => {
-      const value = item[key] || 'Unassigned';
+      const value = item[key] || "Unassigned";
       result[value] = (result[value] || 0) + 1;
       return result;
     }, {});
@@ -130,12 +148,12 @@ function Home() {
     const activity = [];
     const seenActivities = new Set();
 
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       if (task.completed && task.completed_at) {
         const activityKey = `completion-${task.id}-${task.completed_at}`;
         if (!seenActivities.has(activityKey)) {
           activity.push({
-            type: 'completion',
+            type: "completion",
             task,
             date: new Date(task.completed_at),
           });
@@ -148,7 +166,7 @@ function Home() {
         const activityKey = `timer-${task.id}-${latestEntry.start_time}`;
         if (!seenActivities.has(activityKey)) {
           activity.push({
-            type: 'timer',
+            type: "timer",
             task,
             date: new Date(latestEntry.start_time),
           });
@@ -157,35 +175,34 @@ function Home() {
       }
     });
 
-    return activity
-      .sort((a, b) => b.date - a.date)
-      .slice(0, 4);
+    return activity.sort((a, b) => b.date - a.date).slice(0, 4);
   };
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    const secs = seconds % 60;
+    return `${hours}h ${minutes}m ${secs}s`;
   };
 
   const formatDate = (date) => {
     if (!(date instanceof Date) || isNaN(date)) {
-      return 'Invalid date';
+      return "Invalid date";
     }
-    return date.toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return date.toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
   const getPriorityClass = (priority) => {
     switch (priority?.toLowerCase()) {
-      case 'urgent':
+      case "urgent":
         return styles.urgent;
-      case 'high':
+      case "high":
         return styles.high;
-      case 'normal':
+      case "normal":
       default:
         return styles.normal;
     }
@@ -201,208 +218,263 @@ function Home() {
             className={styles.analyticsToggle}
           >
             <Clock size={20} />
-            {showTimeReports ? 'Hide Time Reports' : 'Show Time Reports'}
+            {showTimeReports ? "Hide Time Reports" : "Show Time Reports"}
           </button>
-          <button 
-            onClick={loadTasks} 
+          <button
+            onClick={loadTasks}
             className={styles.refreshButton}
             disabled={loading}
           >
-            <RefreshCw size={16} className={loading ? styles.spinning : ''} />
-            {loading ? 'Refreshing...' : 'Refresh'}
+            <RefreshCw size={16} className={loading ? styles.spinning : ""} />
+            {loading ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
-      
+
       {showTimeReports && <TimeReports tasks={tasks} />}
-
-      <div className={styles.dashboard}>
-        <div className={styles.overviewGrid}>
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <CheckCircle2 size={20} />
-              <h3>Tasks Overview</h3>
-            </div>
-            <div className={styles.cardContent}>
-              <div className={styles.stat}>
-                <span>Total Tasks</span>
-                <span className={styles.value}>{analytics.overview.totalTasks}</span>
+      {loading ? (
+        <p className={styles.homeLoading}></p>
+      ) : (
+        <div className={styles.dashboard}>
+          <div className={styles.overviewGrid}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <CheckCircle2 size={20} />
+                <h3>Tasks Overview</h3>
               </div>
-              <div className={styles.stat}>
-                <span>Completed</span>
-                <span className={styles.value}>{analytics.overview.completedTasks}</span>
-              </div>
-              <div className={styles.stat}>
-                <span>In Progress</span>
-                <span className={styles.value}>{analytics.overview.inProgressTasks}</span>
-              </div>
-              <div className={styles.stat}>
-                <span>Upcoming (7 days)</span>
-                <span className={styles.value}>{analytics.overview.upcomingTasks}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <AlertTriangle size={20} />
-              <h3>Priority Distribution</h3>
-            </div>
-            <div className={styles.cardContent}>
-              <div className={styles.stat}>
-                <span className={styles.urgent}>Urgent</span>
-                <span className={styles.value}>{analytics.priorities.urgent}</span>
-              </div>
-              <div className={styles.stat}>
-                <span className={styles.high}>High</span>
-                <span className={styles.value}>{analytics.priorities.high}</span>
-              </div>
-              <div className={styles.stat}>
-                <span className={styles.normal}>Normal</span>
-                <span className={styles.value}>{analytics.priorities.normal}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <Timer size={20} />
-              <h3>Time Tracking</h3>
-            </div>
-            <div className={styles.cardContent}>
-              <div className={styles.stat}>
-                <span>Total Time</span>
-                <span className={styles.value}>{formatTime(analytics.timeTracking.totalTime)}</span>
-              </div>
-              <div className={styles.stat}>
-                <span>Average per Task</span>
-                <span className={styles.value}>{formatTime(analytics.timeTracking.averageTime)}</span>
-              </div>
-              {analytics.timeTracking.mostTimeConsuming && (
+              <div className={styles.cardContent}>
                 <div className={styles.stat}>
-                  <span>Most Time-Consuming</span>
-                  <span className={styles.value} title={analytics.timeTracking.mostTimeConsuming.name}>
-                    {formatTime(analytics.timeTracking.mostTimeConsuming.timeSpent)}
+                  <span>Total Tasks</span>
+                  <span className={styles.value}>
+                    {analytics.overview.totalTasks}
                   </span>
                 </div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <Activity size={20} />
-              <h3>Performance</h3>
-            </div>
-            <div className={styles.cardContent}>
-              <div className={styles.stat}>
-                <span>Completion Rate</span>
-                <span className={styles.value}>{Math.round(analytics.performance.completionRate)}%</span>
-              </div>
-              <div className={styles.stat}>
-                <span>On-time Completion</span>
-                <span className={styles.value}>{Math.round(analytics.performance.onTimeCompletion)}%</span>
-              </div>
-              <div className={styles.stat}>
-                <span>Delayed Tasks</span>
-                <span className={styles.value}>{analytics.performance.delayedTasks}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.distributionSection}>
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <Building2 size={20} />
-              <h3>Project Distribution</h3>
-            </div>
-            <div className={styles.distributionList}>
-              {Object.entries(analytics.distribution.byProject).map(([project, count]) => (
-                <div key={project} className={styles.distributionItem}>
-                  <span className={styles.label}>{project}</span>
-                  <div className={styles.bar}>
-                    <div 
-                      className={styles.fill} 
-                      style={{ width: `${(count / analytics.overview.totalTasks) * 100}%` }}
-                    />
-                  </div>
-                  <span className={styles.count}>{count}</span>
+                <div className={styles.stat}>
+                  <span>Completed</span>
+                  <span className={styles.value}>
+                    {analytics.overview.completedTasks}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <Users size={20} />
-              <h3>Client Distribution</h3>
-            </div>
-            <div className={styles.distributionList}>
-              {Object.entries(analytics.distribution.byClient).map(([client, count]) => (
-                <div key={client} className={styles.distributionItem}>
-                  <span className={styles.label}>{client}</span>
-                  <div className={styles.bar}>
-                    <div 
-                      className={styles.fill} 
-                      style={{ width: `${(count / analytics.overview.totalTasks) * 100}%` }}
-                    />
-                  </div>
-                  <span className={styles.count}>{count}</span>
+                <div className={styles.stat}>
+                  <span>In Progress</span>
+                  <span className={styles.value}>
+                    {analytics.overview.inProgressTasks}
+                  </span>
                 </div>
-              ))}
+                <div className={styles.stat}>
+                  <span>Upcoming (7 days)</span>
+                  <span className={styles.value}>
+                    {analytics.overview.upcomingTasks}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className={styles.activitySection}>
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <CalendarIcon size={20} />
-              <h3>Upcoming Tasks</h3>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <AlertTriangle size={20} />
+                <h3>Priority Distribution</h3>
+              </div>
+              <div className={styles.cardContent}>
+                <div className={styles.stat}>
+                  <span className={styles.urgent}>Urgent</span>
+                  <span className={styles.value}>
+                    {analytics.priorities.urgent}
+                  </span>
+                </div>
+                <div className={styles.stat}>
+                  <span className={styles.high}>High</span>
+                  <span className={styles.value}>
+                    {analytics.priorities.high}
+                  </span>
+                </div>
+                <div className={styles.stat}>
+                  <span className={styles.normal}>Normal</span>
+                  <span className={styles.value}>
+                    {analytics.priorities.normal}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className={styles.activityList}>
-              {analytics.upcoming.map(task => (
-                <div key={task.id} className={`${styles.activityItem} ${getPriorityClass(task.priority)}`}>
-                  <div className={styles.activityContent}>
-                    <span className={styles.activityTitle}>{task.name}</span>
-                    <span className={styles.activityMeta}>
-                      Due: {formatDate(new Date(task.due_date))}
+
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <Timer size={20} />
+                <h3>Time Tracking</h3>
+              </div>
+              <div className={styles.cardContent}>
+                <div className={styles.stat}>
+                  <span>Total Time</span>
+                  <span className={styles.value}>
+                    {formatTime(analytics.timeTracking.totalTime)}
+                  </span>
+                </div>
+                <div className={styles.stat}>
+                  <span>Average per Task</span>
+                  <span className={styles.value}>
+                    {formatTime(analytics.timeTracking.averageTime)}
+                  </span>
+                </div>
+                {analytics.timeTracking.mostTimeConsuming && (
+                  <div className={styles.stat}>
+                    <span>Most Time-Consuming</span>
+                    <span
+                      className={styles.value}
+                      title={analytics.timeTracking.mostTimeConsuming.name}
+                    >
+                      {formatTime(
+                        analytics.timeTracking.mostTimeConsuming.timeSpent
+                      )}
                     </span>
                   </div>
-                  <span className={`${styles.tag} ${getPriorityClass(task.priority)}`}>
-                    {task.priority || 'Normal'}
+                )}
+              </div>
+            </div>
+
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <Activity size={20} />
+                <h3>Performance</h3>
+              </div>
+              <div className={styles.cardContent}>
+                <div className={styles.stat}>
+                  <span>Completion Rate</span>
+                  <span className={styles.value}>
+                    {Math.round(analytics.performance.completionRate)}%
                   </span>
                 </div>
-              ))}
+                <div className={styles.stat}>
+                  <span>On-time Completion</span>
+                  <span className={styles.value}>
+                    {Math.round(analytics.performance.onTimeCompletion)}%
+                  </span>
+                </div>
+                <div className={styles.stat}>
+                  <span>Delayed Tasks</span>
+                  <span className={styles.value}>
+                    {analytics.performance.delayedTasks}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <Activity size={20} />
-              <h3>Recent Activity</h3>
+          <div className={styles.distributionSection}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <Building2 size={20} />
+                <h3>Project Distribution</h3>
+              </div>
+              <div className={styles.distributionList}>
+                {Object.entries(analytics.distribution.byProject).map(
+                  ([project, count]) => (
+                    <div key={project} className={styles.distributionItem}>
+                      <span className={styles.label}>{project}</span>
+                      <div className={styles.bar}>
+                        <div
+                          className={styles.fill}
+                          style={{
+                            width: `${(count / analytics.overview.totalTasks) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className={styles.count}>{count}</span>
+                    </div>
+                  )
+                )}
+              </div>
             </div>
-            <div className={styles.activityList}>
-              {analytics.recentActivity.map((activity, index) => (
-                <div key={`${activity.task.id}-${index}`} className={`${styles.activityItem} ${getPriorityClass(activity.task.priority)}`}>
-                  <div className={styles.activityContent}>
-                    <span className={styles.activityTitle}>{activity.task.name}</span>
-                    <span className={styles.activityMeta}>
-                      {activity.type === 'completion' ? 'Completed' : 'Time tracked'} on {formatDate(activity.date)}
+
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <Users size={20} />
+                <h3>Client Distribution</h3>
+              </div>
+              <div className={styles.distributionList}>
+                {Object.entries(analytics.distribution.byClient).map(
+                  ([client, count]) => (
+                    <div key={client} className={styles.distributionItem}>
+                      <span className={styles.label}>{client}</span>
+                      <div className={styles.bar}>
+                        <div
+                          className={styles.fill}
+                          style={{
+                            width: `${(count / analytics.overview.totalTasks) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <span className={styles.count}>{count}</span>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.activitySection}>
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <CalendarIcon size={20} />
+                <h3>Upcoming Tasks</h3>
+              </div>
+              <div className={styles.activityList}>
+                {analytics.upcoming.map((task) => (
+                  <div
+                    key={task.id}
+                    className={`${styles.activityItem} ${getPriorityClass(task.priority)}`}
+                  >
+                    <div className={styles.activityContent}>
+                      <span className={styles.activityTitle}>{task.name}</span>
+                      <span className={styles.activityMeta}>
+                        Due: {formatDate(new Date(task.due_date))}
+                      </span>
+                    </div>
+                    <span
+                      className={`${styles.tag} ${getPriorityClass(task.priority)}`}
+                    >
+                      {task.priority || "Normal"}
                     </span>
                   </div>
-                  <span className={`${styles.tag} ${getPriorityClass(activity.task.priority)}`}>
-                    {activity.task.priority || 'Normal'}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <Activity size={20} />
+                <h3>Recent Activity</h3>
+              </div>
+              <div className={styles.activityList}>
+                {analytics.recentActivity.map((activity, index) => (
+                  <div
+                    key={`${activity.task.id}-${index}`}
+                    className={`${styles.activityItem} ${getPriorityClass(activity.task.priority)}`}
+                  >
+                    <div className={styles.activityContent}>
+                      <span className={styles.activityTitle}>
+                        {activity.task.name}
+                      </span>
+                      <span className={styles.activityMeta}>
+                        {activity.type === "completion"
+                          ? "Completed"
+                          : "Time tracked"}{" "}
+                        on {formatDate(activity.date)}
+                      </span>
+                    </div>
+                    <span
+                      className={`${styles.tag} ${getPriorityClass(activity.task.priority)}`}
+                    >
+                      {activity.task.priority || "Normal"}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

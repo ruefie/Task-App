@@ -1,50 +1,28 @@
 // src/components/PrivateRoute.jsx
-import React, { useEffect } from 'react';
+import React, { useState, useEffect }  from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Navigate, useNavigate } from 'react-router-dom';
-
-const LoadingFallback = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh'
-  }}>
-    <p>Loading...</p>
-  </div>
-);
+import LoadingSpinner from './ui/LoadingSpinner';
 
 const PrivateRoute = ({ children }) => {
-  const { user, loading, initialized, error } = useAuth();
-  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  const [minDelayOver, setMinDelayOver] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    if (initialized && !loading && !user) {
-      console.log("No user found after initialization, redirecting to login");
-      navigate('/login');
-    }
-  }, [user, loading, initialized, navigate]);
+    const timer = setTimeout(() => setMinDelayOver(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
-  if (!initialized || loading) {
-    return <LoadingFallback />;
+  // Wait until both the auth is done and the minimum delay is over
+  if (loading || !minDelayOver) {
+    return <LoadingSpinner />;
+  }
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  if (error) {
-    return (
-      <div style={{
-        padding: '20px',
-        margin: '20px',
-        border: '1px solid #f56565',
-        borderRadius: '5px',
-        backgroundColor: '#fff5f5'
-      }}>
-        <h2 style={{ color: '#c53030' }}>Authentication Error</h2>
-        <p>{error}</p>
-      </div>
-    );
-  }
-
-  return user ? children : <Navigate to="/login" />;
+  return children;
 };
 
 export default PrivateRoute;

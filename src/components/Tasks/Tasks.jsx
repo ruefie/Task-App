@@ -287,13 +287,24 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Tasks</h1>
-        <button
+        <div className={styles.headerButtons}>  
+          <button
           onClick={() => setShowAnalytics(!showAnalytics)}
           className={styles.analyticsToggle}
         >
           <BarChart2 size={20} />
           {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
         </button>
+        <button 
+          onClick={loadTasks} 
+          className={styles.refreshButton}
+          disabled={loading}
+        >
+          <RefreshCw size={16} className={loading ? styles.spinning : ''} />
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </button>
+        </div>
+      
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
@@ -307,14 +318,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
             Total Time: {formatTime(tasks.reduce((total, task) => total + task.timeSpent, 0))}
           </span>
         </div>
-        <button 
-          onClick={loadTasks} 
-          className={styles.refreshButton}
-          disabled={loading}
-        >
-          <RefreshCw size={16} className={loading ? styles.spinning : ''} />
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
+       
       </div>
 
       {renderContent()}

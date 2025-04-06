@@ -28,6 +28,10 @@ $warning-color: #f59e0b;
     margin: 0;
   }
 }
+.headerButtons{
+  display: flex;
+  gap: 1rem;
+}
 
 .analyticsToggle {
   display: flex;

@@ -1,18 +1,17 @@
 // src/contexts/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { profilesService } from '../lib/profiles';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
+import { profilesService } from "../lib/profiles";
 
 const AuthContext = createContext({
-  signUp: () => Promise.resolve(),
-  signIn: () => Promise.resolve(),
-  signOut: () => Promise.resolve(),
-  updateProfile: () => Promise.resolve(),
+  signUp: async () => {},
+  signIn: async () => {},
+  signOut: async () => {},
+  updateProfile: async () => {},
   user: null,
   profile: null,
   isAdmin: false,
   loading: true,
-  initialized: false,
   error: null,
 });
 
@@ -23,226 +22,132 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState(null);
 
   const loadUserProfile = async (userId) => {
     try {
-      console.log("Loading user profile for:", userId);
       const profileData = await profilesService.getProfile(userId);
-      console.log("Profile data loaded:", profileData);
       if (profileData) {
         setProfile(profileData);
         setIsAdmin(Boolean(profileData.is_admin));
-        console.log("Profile set, isAdmin:", Boolean(profileData.is_admin));
-      } else {
-        console.log("No profile data returned");
       }
     } catch (err) {
       console.error("Error loading user profile:", err);
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
-  
+
   useEffect(() => {
-    let isMounted = true;
-    const initAuth = async () => {
-      try {
-        console.log("AuthProvider: Initializing auth state");
-        const { data, error: sessionError } = await supabase.auth.getSession();
-        if (!isMounted) return;
-        if (sessionError) {
-          console.error("Error getting session:", sessionError);
-          setError(sessionError.message);
-          setLoading(false);
-          setInitialized(true);
-          return;
-        }
-        const session = data?.session;
-        console.log("Session data:", session ? "Session exists" : "No session");
+    // Listen for auth state changes.
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        loadUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+      }
+      setLoading(false);
+    });
+
+    // Get the current session.
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
         if (session?.user) {
-          console.log("User found in session:", session.user.id);
           setUser(session.user);
-          await loadUserProfile(session.user.id);
-        } else {
-          console.log("No user in session");
-          setUser(null);
-          setProfile(null);
-          setIsAdmin(false);
-          setLoading(false);
+          loadUserProfile(session.user.id);
         }
-      } catch (err) {
-        if (!isMounted) return;
-        console.error("Unexpected error during auth initialization:", err);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error getting session:", err);
         setError(err.message);
         setLoading(false);
-      } finally {
-        setInitialized(true);
-      }
-    };
-
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!isMounted) return;
-        console.log("Auth state changed:", event, session ? "Session exists" : "No session");
-        try {
-          if (session?.user) {
-            console.log("User found in auth change:", session.user.id, "Event:", event);
-            setUser(session.user);
-            if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-              await loadUserProfile(session.user.id);
-            }
-          } else {
-            console.log("No user in auth change. Event:", event);
-            setUser(null);
-            setProfile(null);
-            setIsAdmin(false);
-            setLoading(false);
-          }
-        } catch (err) {
-          if (!isMounted) return;
-          console.error("Error in auth state change handler:", err);
-          setError(err.message);
-          setLoading(false);
-        }
-      }
-    );
+      });
 
     return () => {
-      isMounted = false;
-      console.log("Unsubscribing from auth state changes");
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
-  const value = {
-    signUp: async (data) => {
-      try {
-        console.log("Signing up with:", { email: data.email, metadata: data.options?.data });
-        const options = {
+  const signUp = async (data) => {
+    try {
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
           ...data.options,
-          emailRedirectTo: window.location.origin,
-        };
-        const result = await supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
-          options,
-        });
-        if (result.error) {
-          console.error("Sign up error:", result.error);
-          setError(result.error.message);
-        } else {
-          console.log("Sign up successful:", result.data);
-          if (result.data.user && data.options?.data) {
-            try {
-              let profileData;
-              try {
-                profileData = await profilesService.getProfile(result.data.user.id);
-              } catch (getError) {
-                profileData = null;
-              }
-              if (profileData) {
-                console.log("Profile already exists, updating metadata");
-                await profilesService.updateProfile({
-                  first_name: data.options.data.first_name,
-                  last_name: data.options.data.last_name,
-                });
-              } else {
-                await profilesService.createProfile(result.data.user.id, data.options.data);
-                console.log("Profile created with metadata:", data.options.data);
-              }
-            } catch (profileError) {
-              console.error("Error in profile creation/updating:", profileError);
-            }
-          }
-          const { error: signOutError } = await supabase.auth.signOut();
-          if (signOutError) {
-            console.error("Error during sign out after registration:", signOutError);
-          } else {
-            console.log("User signed out after registration.");
-            setUser(null);
-          }
-        }
-        return result;
-      } catch (err) {
-        console.error("Error in signUp:", err);
-        setError(err.message);
-        throw err;
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+      if (authData.user && data.options?.data) {
+        await profilesService.createProfile(authData.user.id, data.options.data);
       }
-    },
-    signIn: async (data) => {
-      try {
-        console.log("Signing in with:", { email: data.email });
-        const result = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-        if (result.error) {
-          console.error("Sign in error:", result.error);
-          setError(result.error.message);
-        } else {
-          console.log("Sign in successful:", result.data.user.id);
-          setUser(result.data.user);
-          if (result.data.user) {
-            try {
-              await loadUserProfile(result.data.user.id);
-            } catch (profileError) {
-              console.error("Error loading profile after sign in:", profileError);
-            }
-          }
-        }
-        return result;
-      } catch (err) {
-        console.error("Error in signIn:", err);
-        setError(err.message);
-        throw err;
+      return { data: authData, error: null };
+    } catch (err) {
+      console.error("Error in signUp:", err);
+      return { data: null, error: err };
+    }
+  };
+
+  const signIn = async (data) => {
+    try {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      if (error) throw error;
+      if (authData.user) {
+        setUser(authData.user);
+        await loadUserProfile(authData.user.id);
       }
-    },
-    signOut: async () => {
-      try {
-        console.log("Signing out");
-        const result = await supabase.auth.signOut();
-        if (result.error) {
-          console.error("Sign out error:", result.error);
-          setError(result.error.message);
-        } else {
-          console.log("Sign out successful");
-          setUser(null);
-          setProfile(null);
-          setIsAdmin(false);
-        }
-        return result;
-      } catch (err) {
-        console.error("Error in signOut:", err);
-        setError(err.message);
-        throw err;
-      }
-    },
-    updateProfile: async (profileData) => {
-      try {
-        const updatedProfile = await profilesService.updateProfile(profileData);
-        setProfile(updatedProfile);
-        return updatedProfile;
-      } catch (err) {
-        console.error("Error updating profile:", err);
-        setError(err.message);
-        throw err;
-      }
-    },
+      return { data: authData, error: null };
+    } catch (err) {
+      console.error("Error in signIn:", err);
+      return { data: null, error: err };
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      setProfile(null);
+      setIsAdmin(false);
+      return { error: null };
+    } catch (err) {
+      console.error("Error in signOut:", err);
+      return { error: err };
+    }
+  };
+
+  const updateProfile = async (profileData) => {
+    try {
+      const updatedProfile = await profilesService.updateProfile(profileData);
+      setProfile(updatedProfile);
+      return { data: updatedProfile, error: null };
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      return { data: null, error: err };
+    }
+  };
+
+  const value = {
+    signUp,
+    signIn,
+    signOut,
+    updateProfile,
     user,
     profile,
     isAdmin,
     loading,
-    initialized,
     error,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// export default AuthContext;
-// export { useAuth, AuthProvider };
+export default AuthContext;

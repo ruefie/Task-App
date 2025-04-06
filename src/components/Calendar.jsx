@@ -371,6 +371,7 @@ function Calendar() {
     }
   };
 
+
   return (
     <div className={styles.container}>
       <h1>Calendar</h1>
@@ -409,8 +410,7 @@ function Calendar() {
             <div className={styles.taskFormHeader}>
               <h3>
                 {selectedDate 
-                  ? `Add Task for ${currentMonth.toLocaleDateString('default', { month: 'long', year: 'numeric' })} ${selectedDate}` 
-                  : 'Add Task'}
+                  ? `Add Task for  ${selectedDate} ${currentMonth.toLocaleDateString('default', { month: 'long', year: 'numeric' })}` : 'Add Task'}
               </h3>
               <button className={styles.closeButton} onClick={closeTaskForm}>
                 <X size={20} />

@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
@@ -16,9 +17,9 @@ const Register = lazy(() => import("./pages/Register.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 
 const App = () => (
-  <AuthProvider>
-    <TasksProvider>
-      <Router>
+  <Router>
+    <AuthProvider>
+      <TasksProvider>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -31,13 +32,13 @@ const App = () => (
                 </PrivateRoute>
               }
             />
-            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/" element={<Navigate to="/dashboard/home" replace />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Suspense>
-      </Router>
-    </TasksProvider>
-  </AuthProvider>
+      </TasksProvider>
+    </AuthProvider>
+  </Router>
 );
 
 export default App;

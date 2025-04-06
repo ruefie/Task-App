@@ -1,5 +1,6 @@
 .container {
-  padding: 1.5rem;
+  // padding: 1.5rem;
+  // width: 80%;
 }
 
 .header {
@@ -16,7 +17,11 @@
   }
 }
 
-.refreshButton {
+.headerButtons{
+  display: flex;
+  gap: 1rem;
+
+.refreshButton , .analyticsToggle{
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -52,6 +57,12 @@
       animation: spin 1s linear infinite;
     }
   }
+}
+
+.analyticsToggle:active{
+  background-color: #e9ecef;
+}
+
 }
 
 @keyframes spin {

@@ -23,8 +23,12 @@ function TaskComments({ taskId, comments, onAddComment }) {
     });
   };
 
-  const getAuthorEmail = (comment) => {
-    return comment.auth_user?.email || 'Unknown User';
+  const getAuthorName = (comment) => {
+    // Change this: const user = comment.auth_user;
+    const user = comment.profile;
+    if (!user) return 'Unknown User';
+    // display first + last name, or email
+    return user.first_name || user.email;
   };
 
   return (
@@ -37,7 +41,7 @@ function TaskComments({ taskId, comments, onAddComment }) {
         {comments.map((comment) => (
           <div key={comment.id} className={styles.comment}>
             <div className={styles.commentHeader}>
-              <span className={styles.author}>{getAuthorEmail(comment)}</span>
+              <span className={styles.author}>{getAuthorName(comment)}</span>
               <span className={styles.date}>
                 {formatDate(comment.created_at)}
               </span>

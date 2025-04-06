@@ -25,16 +25,16 @@ const Profile = lazy(() => import('../components/Profile.jsx'));
 const AdminPanel = lazy(() => import('../components/AdminPanel.jsx'));
 
 // Loading component
-const LoadingComponent = () => (
-  <div className={styles.loadingContainer}>
-    <div>
-      <p className={styles.loadingText}>Loading...</p>
-      <div className={styles.loadingBar}>
-        <div className={styles.loadingFill}></div>
-      </div>
-    </div>
-  </div>
-);
+// const LoadingComponent = () => (
+//   <div className={styles.loadingContainer}>
+//     <div>
+//       <p className={styles.loadingText}>Loading...</p>
+//       <div className={styles.loadingBar}>
+//         <div className={styles.loadingFill}></div>
+//       </div>
+//     </div>
+//   </div>
+// );
 
 // Error component
 const ErrorComponent = ({ message }) => (
@@ -231,7 +231,7 @@ function Dashboard() {
         <main className={styles.mainArea}>
           <div className={styles.contentWrapper}>
             <div className={styles.contentContainer}>
-              <Suspense fallback={<LoadingComponent />}>
+              <Suspense>
                 <Routes>
                 <Route index element={<Navigate to="home" replace />} />
                   <Route path="/home" element={<Home />} />

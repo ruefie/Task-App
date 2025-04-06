@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,15 +10,12 @@ function Login() {
   const [localError, setLocalError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  // Local toggle for Admin Login mode
   const [isAdminToggle, setIsAdminToggle] = useState(false);
 
-  // Destructure signIn, signOut, user, profile from AuthContext.
   const { signIn, signOut, user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Capture and display any success message from location.state.
   useEffect(() => {
     if (location.state?.message) {
       setSuccess(location.state.message);
@@ -27,43 +23,34 @@ function Login() {
     }
   }, [location.state]);
 
-  // This useEffect monitors when user and profile are loaded, then navigates accordingly.
   useEffect(() => {
-    // Only run if we have a user and profile loaded
     if (user && profile) {
-      if (isAdminToggle) {
-        // If admin mode is toggled, but the profile does not indicate admin rights:
-        if (profile.is_admin !== true) {
-          setLocalError("Access Denied: This account does not have admin privileges.");
-          // Sign out the user and clear the fields
-          signOut();
-          return;
-        }
+      if (isAdminToggle && !profile.is_admin) {
+        setLocalError("Access Denied: This account does not have admin privileges.");
+        signOut();
+        return;
       }
-      // If everything is in order, navigate to dashboard.
-      navigate('/dashboard', { replace: true });
-    }
-    // We want this effect to run whenever user, profile, or isAdminToggle changes.
-  }, [user, profile, isAdminToggle, signOut, navigate]);
 
-  // Toggle between admin and user login modes.
+      const from = location.state?.from || '/dashboard/home';
+      navigate(from, { replace: true });
+    }
+  }, [user, profile, isAdminToggle, signOut, navigate, location.state]);
+
   const toggleLoginType = () => {
-    setIsAdminToggle((prev) => !prev);
+    setIsAdminToggle(prev => !prev);
     setEmail('');
     setPassword('');
+    setLocalError('');
   };
 
-  // handleSubmit only calls signIn; navigation is handled in useEffect.
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLocalError('');
       setLoading(true);
-      console.log('Attempting to sign in with:', { email });
-      const { data, error } = await signIn({ email, password });
+      const { error } = await signIn({ email, password });
+      
       if (error) throw error;
-      console.log('Sign in process initiated.');
-      // Note: Do not navigate here—useEffect will take care of it once user/profile are set.
     } catch (err) {
       console.error('Login error:', err);
       setLocalError(err.message || 'Failed to sign in. Please check your credentials.');
@@ -91,18 +78,21 @@ function Login() {
             create a new account
           </Link>
         </p>
+        
         {success && (
           <div className={styles.success}>
-            <CheckCircle size={16} style={{ marginRight: '8px' }} />
+            <CheckCircle size={16} />
             {success}
           </div>
         )}
+        
         {localError && (
           <div className={styles.error}>
-            <AlertCircle size={16} style={{ marginRight: '8px' }} />
+            <AlertCircle size={16} />
             {localError}
           </div>
         )}
+
         <div className={styles.loginTypeToggle}>
           <button
             type="button"
@@ -121,6 +111,7 @@ function Login() {
             User
           </button>
         </div>
+
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>
@@ -135,8 +126,10 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={styles.input}
+              placeholder="Enter your email"
             />
           </div>
+
           <div className={styles.formGroup}>
             <label htmlFor="password" className={styles.label}>
               Password
@@ -150,8 +143,10 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={styles.input}
+              placeholder="Enter your password"
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}
