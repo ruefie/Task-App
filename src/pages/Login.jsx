@@ -31,8 +31,8 @@ function Login() {
         return;
       }
 
-      const from = location.state?.from || '/dashboard/home';
-      navigate(from, { replace: true });
+      // const from = location.state?.from || '/dashboard/home';
+      navigate('/dashboard/home', { replace: true });
     }
   }, [user, profile, isAdminToggle, signOut, navigate, location.state]);
 
