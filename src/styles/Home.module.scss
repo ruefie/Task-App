@@ -1,47 +1,111 @@
+// Variables
+$colors: (
+  primary: #3b82f6,
+  primary-light: #dbeafe,
+  primary-dark: #1d4ed8,
+  secondary: #6b7280,
+  warning: #f59e0b,
+  warning-light: #fef3c7,
+  warning-dark: #b45309,
+  danger: #dc2626,
+  danger-light: #fee2e2,
+  danger-dark: #b91c1c,
+  success: #10b981,
+  gray-50: #f9fafb,
+  gray-100: #f3f4f6,
+  gray-200: #e5e7eb,
+  gray-300: #d1d5db,
+  gray-400: #9ca3af,
+  gray-500: #6b7280,
+  gray-600: #4b5563,
+  gray-700: #374151,
+  gray-800: #1f2937,
+  gray-900: #111827,
+  white: #ffffff
+);
+
+// Spacing
+$spacing: (
+  xs: 0.25rem,
+  sm: 0.5rem,
+  md: 0.75rem,
+  base: 1rem,
+  lg: 1.25rem,
+  xl: 1.5rem,
+  '2xl': 2rem
+);
+
+// Shadows
+$shadows: (
+  sm: 0 1px 2px rgba(0, 0, 0, 0.05),
+  md: 0 1px 3px rgba(0, 0, 0, 0.1)
+);
+
+// Border radius
+$radius: (
+  sm: 0.25rem,
+  md: 0.375rem,
+  lg: 0.5rem,
+  full: 9999px
+);
+
+// Mixins
+@mixin flex($direction: row, $justify: flex-start, $align: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+  @if $gap != 0 {
+    gap: $gap;
+  }
+}
+
+@mixin grid($columns: 1, $gap: map-get($spacing, base)) {
+  display: grid;
+  grid-template-columns: $columns;
+  gap: $gap;
+}
+
+// Styles
 .container {
-  // padding: 1.5rem;
-  // width: 80%;
+  padding: map-get($spacing, xl);
 }
 
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
+  @include flex(row, space-between, center);
+  margin-bottom: map-get($spacing, '2xl');
   
   h1 {
     margin: 0;
     font-size: 1.875rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: map-get($colors, gray-900);
   }
 }
 
-.headerButtons{
-  display: flex;
-  gap: 1rem;
+.headerButtons {
+  @include flex(row, flex-start, center, map-get($spacing, md));
+}
 
-.refreshButton , .analyticsToggle{
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  color: #495057;
+%button-base {
+  @include flex(row, center, center, map-get($spacing, sm));
+  padding: map-get($spacing, sm) map-get($spacing, base);
+  background-color: map-get($colors, gray-50);
+  border: 1px solid map-get($colors, gray-200);
+  border-radius: map-get($radius, md);
+  color: map-get($colors, gray-600);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    background-color: #e9ecef;
-    border-color: #ced4da;
+    background-color: map-get($colors, gray-100);
+    border-color: map-get($colors, gray-300);
   }
 
   &:active {
-    background-color: #dee2e6;
+    background-color: map-get($colors, gray-200);
   }
 
   &:disabled {
@@ -59,132 +123,198 @@
   }
 }
 
-.analyticsToggle:active{
-  background-color: #e9ecef;
-}
-
+.analyticsToggle, .refreshButton {
+  @extend %button-base;
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .error {
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background-color: #fff5f5;
-  border: 1px solid #feb2b2;
-  border-radius: 0.375rem;
-  color: #c53030;
+  padding: map-get($spacing, base);
+  margin-bottom: map-get($spacing, base);
+  background-color: map-get($colors, danger-light);
+  border: 1px solid map-get($colors, danger);
+  border-radius: map-get($radius, md);
+  color: map-get($colors, danger-dark);
 }
 
 .dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  @include flex(column, flex-start, stretch, map-get($spacing, xl));
 }
 
 .overviewGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  @include grid(repeat(auto-fit, minmax(250px, 1fr)), map-get($spacing, base));
 }
 
 .card {
-  background-color: white;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-  &.normal {
-    border-left: 4px solid #3b82f6;
-  }
-
-  &.high {
-    border-left: 4px solid #f59e0b;
-  }
-
-  &.urgent {
-    border-left: 4px solid #dc2626;
-  }
+  background-color: map-get($colors, white);
+  border-radius: map-get($radius, lg);
+  padding: map-get($spacing, lg);
+  box-shadow: map-get($shadows, sm);
 }
 
 .cardHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  @include flex(row, flex-start, center, map-get($spacing, md));
+  margin-bottom: map-get($spacing, base);
 
   h3 {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: map-get($colors, gray-900);
   }
 
   svg {
-    color: #6b7280;
+    color: map-get($colors, gray-500);
   }
 }
 
 .cardContent {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  @include flex(column, flex-start, stretch, map-get($spacing, md));
 }
 
 .stat {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  @include flex(row, space-between, center);
   font-size: 0.875rem;
-  color: #4b5563;
+  color: map-get($colors, gray-600);
 
   .value {
     font-weight: 600;
-    color: #1a1a1a;
-  }
-
-  .urgent {
-    color: #dc2626;
-  }
-
-  .high {
-    color: #f59e0b;
-  }
-
-  .normal {
-    color: #3b82f6;
+    color: map-get($colors, gray-900);
   }
 }
 
+// Priority colors
+.urgent {
+  color: map-get($colors, danger);
+}
+
+.high {
+  color: map-get($colors, warning);
+}
+
+.normal {
+  color: map-get($colors, primary);
+}
+
+// Employee Section
+.employeeSection {
+  margin-top: map-get($spacing, base);
+}
+
+.employeeList {
+  @include grid(repeat(auto-fill, minmax(300px, 1fr)), map-get($spacing, base));
+}
+
+.employeeItem {
+  background-color: map-get($colors, white);
+  border-radius: map-get($radius, lg);
+  padding: map-get($spacing, base);
+  box-shadow: map-get($shadows, md);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.employeeHeader {
+  @include flex(row, space-between, center);
+  margin-bottom: map-get($spacing, base);
+}
+
+.employeeName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: map-get($colors, gray-900);
+}
+
+.totalTasks {
+  @include flex(row, center, center);
+  padding: map-get($spacing, xs) map-get($spacing, md);
+  background-color: map-get($colors, gray-100);
+  border-radius: map-get($radius, full);
+  font-size: 0.875rem;
+
+  .count {
+    font-weight: 600;
+    color: map-get($colors, gray-900);
+    margin-left: map-get($spacing, sm);
+  }
+}
+
+.statsGrid {
+  @include grid(repeat(4, 1fr), map-get($spacing, sm));
+  margin-bottom: map-get($spacing, md);
+}
+
+.statBox {
+  padding: map-get($spacing, sm);
+  background-color: map-get($colors, gray-50);
+  border-radius: map-get($radius, md);
+  text-align: center;
+
+  .label {
+    font-size: 0.75rem;
+    color: map-get($colors, gray-500);
+    margin-bottom: map-get($spacing, xs);
+    display: block;
+  }
+
+  .value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: map-get($colors, gray-900);
+  }
+}
+
+.priorityBadges {
+  @include flex(row, flex-start, center, map-get($spacing, sm));
+}
+
+.badge {
+  padding: map-get($spacing, xs) map-get($spacing, sm);
+  border-radius: map-get($radius, md);
+  font-size: 0.75rem;
+  font-weight: 500;
+  @include flex(row, center, center, map-get($spacing, xs));
+
+  &.normal {
+    background-color: map-get($colors, primary-light);
+    color: map-get($colors, primary-dark);
+  }
+
+  &.high {
+    background-color: map-get($colors, warning-light);
+    color: map-get($colors, warning-dark);
+  }
+
+  &.urgent {
+    background-color: map-get($colors, danger-light);
+    color: map-get($colors, danger-dark);
+  }
+}
+
+// Distribution Section
 .distributionSection {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.5rem;
+  @include grid(repeat(auto-fit, minmax(400px, 1fr)), map-get($spacing, xl));
 }
 
 .distributionList {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  @include flex(column, flex-start, stretch, map-get($spacing, md));
 }
 
 .distributionItem {
-  display: grid;
-  grid-template-columns: 2fr 3fr 1fr;
+  @include grid(2fr 3fr 1fr, map-get($spacing, base));
   align-items: center;
-  gap: 1rem;
   font-size: 0.875rem;
 }
 
 .label {
-  color: #4b5563;
+  color: map-get($colors, gray-600);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -192,110 +322,119 @@
 
 .bar {
   height: 0.5rem;
-  background-color: #e5e7eb;
-  border-radius: 0.25rem;
+  background-color: map-get($colors, gray-200);
+  border-radius: map-get($radius, sm);
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
-  background-color: #3b82f6;
-  border-radius: 0.25rem;
+  background-color: map-get($colors, primary);
+  border-radius: map-get($radius, sm);
   transition: width 0.3s ease;
 }
 
 .count {
-  color: #1a1a1a;
+  color: map-get($colors, gray-900);
   font-weight: 500;
   text-align: right;
 }
 
+// Activity Section
 .activitySection {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.5rem;
+  @include grid(repeat(auto-fit, minmax(400px, 1fr)), map-get($spacing, xl));
 }
 
 .activityList {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  @include flex(column, flex-start, stretch, map-get($spacing, md));
 }
 
 .activityItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background-color: #f9fafb;
-  border-radius: 0.375rem;
+  @include flex(row, space-between, center);
+  padding: map-get($spacing, md);
+  background-color: map-get($colors, gray-50);
+  border-radius: map-get($radius, md);
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #f3f4f6;
+    background-color: map-get($colors, gray-100);
   }
 
   &.normal {
-    border-left: 4px solid #3b82f6;
+    border-left: 3px solid map-get($colors, primary);
   }
 
   &.high {
-    border-left: 4px solid #f59e0b;
+    border-left: 3px solid map-get($colors, warning);
   }
 
   &.urgent {
-    border-left: 4px solid #dc2626;
+    border-left: 3px solid map-get($colors, danger);
   }
 }
 
 .activityContent {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  @include flex(column, flex-start, stretch, map-get($spacing, xs));
 }
 
 .activityTitle {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #1a1a1a;
+  color: map-get($colors, gray-900);
 }
 
 .activityMeta {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: map-get($colors, gray-500);
 }
 
 .tag {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  padding: map-get($spacing, xs) map-get($spacing, sm);
+  border-radius: map-get($radius, sm);
   font-size: 0.75rem;
   font-weight: 500;
   
   &.urgent {
-    background-color: #fef2f2;
-    color: #dc2626;
+    background-color: map-get($colors, danger-light);
+    color: map-get($colors, danger);
   }
   
   &.high {
-    background-color: #fff7ed;
-    color: #f59e0b;
+    background-color: map-get($colors, warning-light);
+    color: map-get($colors, warning);
   }
   
   &.normal {
-    background-color: #eff6ff;
-    color: #3b82f6;
+    background-color: map-get($colors, primary-light);
+    color: map-get($colors, primary);
+  }
+}
+
+// Responsive Styles
+@media (max-width: 1024px) {
+  .employeeList {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
   .container {
-    padding: 1rem;
+    padding: map-get($spacing, base);
   }
 
   .header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: map-get($spacing, base);
+  }
+
+  .headerButtons {
+    width: 100%;
+    flex-direction: column;
   }
 
   .overviewGrid {
@@ -309,5 +448,13 @@
 
   .distributionItem {
     grid-template-columns: 1.5fr 2fr 0.5fr;
+  }
+
+  .employeeList {
+    grid-template-columns: 1fr;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

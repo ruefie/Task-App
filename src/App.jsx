@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
@@ -8,6 +7,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TasksProvider } from "./contexts/TasksContext";
+import { NotesProvider } from "./contexts/NotesContext";
 import PrivateRoute from "./components/PrivateRoute";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 import PageNotFound from "./components/ui/PageNotFound";
@@ -20,22 +20,24 @@ const App = () => (
   <Router>
     <AuthProvider>
       <TasksProvider>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route
-              path="/dashboard/*"
-              element={
-                <PrivateRoute>
-                  <Dashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route path="/" element={<Navigate to="/dashboard/home" replace />} />
-            <Route path="*" element={<PageNotFound />} />
-          </Routes>
-        </Suspense>
+        <NotesProvider>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route
+                path="/dashboard/*"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="/" element={<Navigate to="/dashboard/home" replace />} />
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+          </Suspense>
+        </NotesProvider>
       </TasksProvider>
     </AuthProvider>
   </Router>

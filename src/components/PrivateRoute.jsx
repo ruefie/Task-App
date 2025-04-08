@@ -6,11 +6,11 @@ import LoadingSpinner from './ui/LoadingSpinner';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  const [minDelayOver, setMinDelayOver] = useState(false);
+  const [minDelayOver, setMinDelayOver] = useState(50);
   const location = useLocation();
 
   useEffect(() => {
-    const timer = setTimeout(() => setMinDelayOver(true), 100);
+    const timer = setTimeout(() => setMinDelayOver(true), 5);
     return () => clearTimeout(timer);
   }, []);
 

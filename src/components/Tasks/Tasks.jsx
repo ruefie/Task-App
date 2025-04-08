@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon, BarChart2 } from "lucide-react";
+import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon, BarChart2, Copy } from "lucide-react";
 import { useTasks } from "../../contexts/TasksContext";
 import { tasksService } from "../../lib/tasks";
 import { supabase } from "../../lib/supabase";
@@ -21,6 +21,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   const [selectedTask, setSelectedTask] = useState(null);
   const [timers, setTimers] = useState({});
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [copyFromTask, setCopyFromTask] = useState(null);
 
   useEffect(() => {
     loadTasks();
@@ -36,6 +37,25 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   const handleTaskClick = (task, e) => {
     if (e.target.closest("button")) return;
     setSelectedTask(task);
+  };
+
+  const handleCopyTask = (task) => {
+    // Create a clean copy of the task without internal fields
+    const taskCopy = {
+      name: `${task.name} (Copy)`,
+      milestone: task.milestone,
+      priority: task.priority,
+      start_date: task.start_date,
+      due_date: task.due_date,
+      assignee: task.assignee,
+      client: task.client,
+      project: task.project,
+      description: task.description,
+      completed: false
+    };
+    
+    setCopyFromTask(taskCopy);
+    setShowForm(true);
   };
 
   const handleDragEnd = async (result) => {
@@ -72,16 +92,11 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     if (!task) return;
     try {
       const newCompleted = !task.completed;
-      let updatedData = { completed: newCompleted };
-      if (newCompleted) {
-        if (task.milestone !== "Done") {
-          updatedData.milestone = "Done";
-          task._prevMilestone = task.milestone;
-        }
-      } else {
-        updatedData.milestone = task._prevMilestone ? task._prevMilestone : task.milestone;
-        delete task._prevMilestone;
-      }
+      const updatedData = { 
+        completed: newCompleted,
+        milestone: newCompleted ? "Done" : task.milestone
+      };
+      
       await tasksService.updateTask(id, updatedData);
       setTasks((prev) =>
         prev.map((t) => (t.id === id ? { ...t, ...updatedData } : t))
@@ -242,8 +257,10 @@ function Tasks({ onTaskAdded, initialTaskData }) {
             onClose={() => {
               setShowForm(false);
               setEditingTask(null);
+              setCopyFromTask(null);
             }}
             editingTask={editingTask}
+            initialData={copyFromTask || initialTaskData}
             setTasks={setTasks}
             onTaskAdded={onTaskAdded}
           />
@@ -262,6 +279,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
             }}
             onToggleTimer={toggleTimer}
             onPromptResetTimer={promptResetTimer}
+            onCopyTask={handleCopyTask}
             formatTime={formatTime}
           />
         ) : (
@@ -276,6 +294,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
             }}
             onToggleTimer={toggleTimer}
             onPromptResetTimer={promptResetTimer}
+            onCopyTask={handleCopyTask}
             formatTime={formatTime}
           />
         )}
@@ -287,24 +306,13 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Tasks</h1>
-        <div className={styles.headerButtons}>  
-          <button
+        <button
           onClick={() => setShowAnalytics(!showAnalytics)}
           className={styles.analyticsToggle}
         >
           <BarChart2 size={20} />
           {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
         </button>
-        <button 
-          onClick={loadTasks} 
-          className={styles.refreshButton}
-          disabled={loading}
-        >
-          <RefreshCw size={16} className={loading ? styles.spinning : ''} />
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
-        </div>
-      
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
@@ -318,7 +326,14 @@ function Tasks({ onTaskAdded, initialTaskData }) {
             Total Time: {formatTime(tasks.reduce((total, task) => total + task.timeSpent, 0))}
           </span>
         </div>
-       
+        <button 
+          onClick={loadTasks} 
+          className={styles.refreshButton}
+          disabled={loading}
+        >
+          <RefreshCw size={16} className={loading ? styles.spinning : ''} />
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
 
       {renderContent()}
@@ -347,6 +362,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           formatTime={formatTime}
+          onCopyTask={handleCopyTask}
         />
       )}
     </div>

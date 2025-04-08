@@ -1,10 +1,10 @@
 import React from 'react';
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Check, Trash2, Edit2, Building2, Briefcase, Clock, Play, Pause, StopCircle } from 'lucide-react';
+import { Check, Trash2, Edit2, Building2, Briefcase, Clock, Play, Pause, StopCircle, Copy } from 'lucide-react';
 import styles from '../../styles/Tasks.module.scss';
 
 function KanbanBoard({ 
-  tasks = [], // Provide default empty array
+  tasks = [], 
   onDragEnd, 
   onTaskClick, 
   onToggleTask, 
@@ -12,6 +12,7 @@ function KanbanBoard({
   onStartEditing, 
   onToggleTimer, 
   onPromptResetTimer,
+  onCopyTask,
   formatTime 
 }) {
   const groupedTasks = {
@@ -52,12 +53,21 @@ function KanbanBoard({
                               >
                                 <Check size={20} />
                               </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); }}
-                                className={styles.deleteButton}
-                              >
-                                <Trash2 size={20} />
-                              </button>
+                              <div className={styles.taskActions}>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); onCopyTask(task); }}
+                                  className={styles.copyButton}
+                                  title="Copy Task"
+                                >
+                                  <Copy size={16} />
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); }}
+                                  className={styles.deleteButton}
+                                >
+                                  <Trash2 size={20} />
+                                </button>
+                              </div>
                             </div>
                             <div className={styles.taskContent}>
                               <div className={styles.taskHeader}>

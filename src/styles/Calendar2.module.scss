@@ -69,7 +69,7 @@ $success-color: #10b981;
   }
 }
 
-/* View toggle buttons */
+// View toggle buttons
 .viewToggle {
   display: flex;
   background-color: $hover-bg;
@@ -109,7 +109,6 @@ $success-color: #10b981;
   }
 }
 
-/* Grid and Days */
 .grid {
   .weekdays {
     display: grid;
@@ -132,7 +131,7 @@ $success-color: #10b981;
     gap: 0.5rem;
 
     .day {
-      height: 150px;
+      min-height: 100px;
       border: 1px solid $border-color;
       border-radius: 0.375rem;
       display: flex;
@@ -150,71 +149,38 @@ $success-color: #10b981;
       &:hover:not(.emptyDay) {
         background-color: $hover-bg;
         border-color: color.adjust($border-color, $lightness: -5%);
-      }
-      
-      /* Header area inside each day: contains dayNumber and action buttons */
-      .dayHeaders {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        
-        .dayNumber {
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: $text-color;
+
+        .addTask {
+          opacity: 1;
         }
-        
-        /* Action buttons container – hidden by default, shown on hover */
-        .dayActions {
-          display: flex;
-          gap: 0.25rem;
-          opacity: 0;
-          transition: opacity 0.2s;
-          
-          button {
-            padding: 0.25rem;
-            border: none;
-            background-color: $primary-color;
-            color: $white;
-            border-radius: 0.25rem;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            
-            &:hover {
-              background-color: color.adjust($primary-color, $lightness: -5%);
-            }
-          }
+
+        .addNote {
+          opacity: 1;
         }
-      }
-      
-      /* Reveal the action buttons when hovering over the day */
-      &:hover .dayActions {
-        opacity: 1;
       }
 
-      /* Content area that lists tasks and notes */
+      .dayNumber {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: $text-color;
+      }
+
+      // Updated dayContent: auto-adjusts height but limits its maximum height;
+      // inner overflow is scrollable.
       .dayContent {
         flex: 1;
         padding: 0.5rem;
-        max-height: 300px; // Set maximum height for the content area
+        max-height: 300px; // Set maximum height (change if needed)
         overflow-y: auto;
       }
-
-      /* Inner lists for tasks and notes – let the parent .dayContent control scrolling */
-      // .tasksList, .notesList {
-      //   display: flex;
-      //   flex-direction: column;
-      //   gap: 0.25rem;
-      //   margin-top: 0.5rem;
-      // }
-
 
       .tasksList {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
         margin-top: 0.5rem;
+        overflow-y: auto;
+        max-height: 80px;
         
         .taskItem {
           font-size: 0.75rem;
@@ -246,6 +212,8 @@ $success-color: #10b981;
         flex-direction: column;
         gap: 0.25rem;
         margin-top: 0.5rem;
+        overflow-y: auto;
+        max-height: 80px;
 
         .noteItem {
           font-size: 0.75rem;
@@ -254,18 +222,64 @@ $success-color: #10b981;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+
+          &.normal {
+            background-color: color.adjust($primary-color, $lightness: 40%);
+            color: color.adjust($primary-color, $lightness: -20%);
+          }
+
+          &.high {
+            background-color: color.adjust($warning-color, $lightness: 40%);
+            color: color.adjust($warning-color, $lightness: -20%);
+          }
+
+          &.urgent {
+            background-color: color.adjust($error-color, $lightness: 40%);
+            color: color.adjust($error-color, $lightness: -20%);
+          }
         }
       }
 
+      .addTask {
+        opacity: 0;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        background-color: $primary-color;
+        color: $white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: absolute;
+        bottom: 0.5rem;
+        right: 0.5rem;
 
+        &:hover {
+          background-color: color.adjust($primary-color, $lightness: -5%);
+        }
+      }
 
+      .addNote {
+        opacity: 0;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        background-color: $primary-color;
+        color: $white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: absolute;
+        bottom: 0.5rem;
+        left: 0.5rem;
 
-      
+        &:hover {
+          background-color: color.adjust($primary-color, $lightness: -5%);
+        }
+      }
     }
   }
 }
 
-/* Day View Styles */
+// Day View Styles
 .dayView {
   min-height: 400px;
   border: 1px solid $border-color;
@@ -283,7 +297,6 @@ $success-color: #10b981;
   color: $text-color;
 }
 
-/* Additional Day View styling for tasks and notes remains unchanged */
 .dayTasksList {
   display: flex;
   flex-direction: column;
@@ -298,11 +311,11 @@ $success-color: #10b981;
   border-radius: 0.375rem;
   border: 1px solid $border-color;
   transition: all 0.2s;
-  
+
   &:hover {
     background-color: $hover-bg;
   }
-  
+
   &.normal {
     border-left: 3px solid $primary-color;
   }
@@ -327,8 +340,7 @@ $success-color: #10b981;
   font-weight: 500;
 }
 
-.addDayTask,
-.addDayNote {
+.addDayTask, .addDayNote {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -342,7 +354,7 @@ $success-color: #10b981;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background-color: color.adjust($hover-bg, $lightness: -2%);
     color: $text-color;
@@ -356,7 +368,7 @@ $success-color: #10b981;
   font-size: 0.875rem;
 }
 
-/* Week View Styles */
+// Week View Styles
 .weekView {
   border: 1px solid $border-color;
   border-radius: 0.5rem;
@@ -378,7 +390,7 @@ $success-color: #10b981;
   min-width: 100px;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     background-color: $hover-bg;
   }
@@ -464,11 +476,11 @@ $success-color: #10b981;
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  
+
   &:hover {
     background-color: color.adjust($primary-color, $lightness: -5%);
   }
-  
+
   .weekDay:hover & {
     opacity: 1;
   }
@@ -490,17 +502,17 @@ $success-color: #10b981;
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
-  
+
   &:hover {
     background-color: color.adjust($primary-color, $lightness: -5%);
   }
-  
+
   .weekDay:hover & {
     opacity: 1;
   }
 }
 
-/* Year View Styles */
+// Year View Styles
 .yearView {
   padding: 1rem 0;
 }
@@ -518,7 +530,7 @@ $success-color: #10b981;
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s;
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
@@ -545,8 +557,7 @@ $success-color: #10b981;
   justify-content: center;
 }
 
-.taskCount,
-.noteCount {
+.taskCount, .noteCount {
   background-color: color.adjust($primary-color, $lightness: 40%);
   color: color.adjust($primary-color, $lightness: -20%);
   font-size: 0.875rem;
@@ -648,7 +659,7 @@ $success-color: #10b981;
   }
 }
 
-/* Responsive Styles */
+// Responsive styles
 @media (max-width: 768px) {
   .header {
     flex-direction: column;

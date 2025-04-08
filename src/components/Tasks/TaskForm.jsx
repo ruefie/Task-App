@@ -1,29 +1,44 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Building2, Briefcase, Paperclip, X, Save } from 'lucide-react';
 import styles from '../../styles/Tasks.module.scss';
 import { tasksService } from '../../lib/tasks';
 
-function TaskForm({ onClose, editingTask, setTasks, onTaskAdded }) {
+function TaskForm({ onClose, editingTask, setTasks, onTaskAdded, initialData, copyData }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
-  const [taskData, setTaskData] = useState(
-    editingTask || {
-      name: "",
-      milestone: "Todo",
-      priority: "Normal",
-      start_date: "",
-      due_date: "",
-      assignee: "",
-      client: "",
-      project: "",
-      description: "",
-      attachments: [],
-      timeSpent: 0,
-      timerEntries: [],
-      isTimerRunning: false,
+  const [taskData, setTaskData] = useState({
+    name: "",
+    milestone: "Todo",
+    priority: "Normal",
+    start_date: "",
+    due_date: "",
+    assignee: "",
+    client: "",
+    project: "",
+    description: "",
+    attachments: [],
+    timeSpent: 0,
+    timerEntries: [],
+    isTimerRunning: false,
+  });
+
+  useEffect(() => {
+    // Initialize form with either editingTask, initialData, or default values
+    if (editingTask) {
+      setTaskData(editingTask);
+    } else if (initialData) {
+      setTaskData({
+        ...taskData,
+        ...initialData,
+        // Ensure these fields are always reset for copied tasks
+        timeSpent: 0,
+        timerEntries: [],
+        isTimerRunning: false,
+        attachments: [],
+      });
     }
-  );
+  }, [editingTask, initialData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -102,10 +117,15 @@ function TaskForm({ onClose, editingTask, setTasks, onTaskAdded }) {
     }
   };
 
+  const getFormTitle = () => {
+    if (editingTask) return "Edit Task";
+    if (copyData) return "Copy Task";
+    return "Add Task";
+  };
   return (
     <div className={styles.formCard}>
       <div className={styles.formHeader}>
-        <h2>{editingTask ? "Edit Task" : "Add Task"}</h2>
+        <h2>{getFormTitle()}</h2>
         <button onClick={onClose} className={styles.closeButton}>
           <X size={20} />
         </button>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Paperclip, Clock } from 'lucide-react';
+import { X, Paperclip, Clock, Copy } from 'lucide-react';
 import TaskComments from './TaskComments';
 import { commentsService } from '../../lib/comments';
 import styles from '../../styles/Tasks.module.scss';
 
-function TaskDetails({ task, onClose, formatTime }) {
+function TaskDetails({ task, onClose, formatTime, onCopyTask }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,9 +41,19 @@ function TaskDetails({ task, onClose, formatTime }) {
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.modalCloseButton} onClick={onClose}>
-          <X size={20} />
-        </button>
+        <div className={styles.modalHeader}>
+          <button className={styles.modalCloseButton} onClick={onClose}>
+            <X size={20} />
+          </button>
+          <button 
+            className={styles.copyButton}
+            onClick={() => { onCopyTask(task); onClose(); }}
+            title="Copy Task"
+          >
+            <Copy size={16} />
+            <span>Copy Task</span>
+          </button>
+        </div>
         <div className={styles.taskDetails}>
           <h2>{task.name}</h2>
           <p><strong>Client/Customer:</strong> {task.client}</p>

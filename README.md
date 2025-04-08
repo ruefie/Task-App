@@ -1,19 +1,75 @@
 # Task Management Application
 
-A comprehensive task management application built with React and Supabase, featuring time tracking, task comments, analytics, and more.
+A comprehensive task management application built with React and Supabase, featuring time tracking, task comments, analytics, calendar integration, and more.
 
 ## Features
 
 - 📋 Task Management with Kanban Board
+  - Drag-and-drop task organization
+  - Multiple view options (Kanban/List)
+  - Task copying functionality
+  - Priority-based color coding
+  - Task dependencies tracking
+  - Task templates support
+
+- 📅 Calendar Integration
+  - Multiple calendar views (Day/Week/Month/Year)
+  - Task and note creation directly from calendar
+  - Visual task distribution
+  - Event reminders
+  - Quick actions for task management
+
 - ⏱️ Time Tracking for Tasks
+  - Start/stop timer for tasks
+  - Track multiple time entries
+  - Session history
+  - Automatic time calculations
+  - Timer reset functionality
+
 - 📊 Analytics Dashboard
+  - Task completion rates
+  - Time distribution analysis
+  - Priority distribution
+  - Project/Client analytics
+  - Employee performance metrics
+
 - 💬 Task Comments
+  - Real-time commenting system
+  - User attribution
+  - Comment history
+  - Timestamp tracking
+
 - 📎 File Attachments
+  - Multiple file support
+  - Preview capabilities
+  - Attachment management
+
 - 🔄 Real-time Updates
+  - Live task status changes
+  - Instant notifications
+  - Collaborative features
+
 - 📱 Responsive Design
+  - Mobile-friendly interface
+  - Adaptive layouts
+  - Touch-friendly interactions
+
 - 🎨 Priority-based Color Coding
+  - Visual priority indicators
+  - Status-based styling
+  - Custom color schemes
+
 - 📈 Time Reports
+  - Detailed time analytics
+  - Export capabilities
+  - Custom date ranges
+  - Project-based reporting
+
 - 👥 User Management
+  - Role-based access control
+  - Team collaboration
+  - User permissions
+  - Activity tracking
 
 ## Prerequisites
 
@@ -60,11 +116,12 @@ npm run dev
 src/
 ├── components/         # React components
 │   ├── Tasks/         # Task-related components
-│   └── ...
+│   ├── Calendar/      # Calendar-related components
+│   └── ui/            # Shared UI components
 ├── contexts/          # React contexts
 ├── lib/              # Utility functions and services
 ├── styles/           # SCSS modules
-└── ...
+└── pages/            # Page components
 ```
 
 ## Database Schema
@@ -75,21 +132,31 @@ The application uses the following main tables in Supabase:
 - `timer_entries`: Time tracking entries
 - `task_comments`: Task comments
 - `task_attachments`: File attachments for tasks
+- `calendar_notes`: Calendar notes and reminders
 
 ## Features Documentation
 
 ### Task Management
 - Create, edit, and delete tasks
+- Copy existing tasks
 - Drag-and-drop Kanban board
 - List view option
 - Priority levels (Normal, High, Urgent)
 - Task status tracking
+
+### Calendar Integration
+- Multiple view modes (Day, Week, Month, Year)
+- Task and note creation
+- Visual task distribution
+- Event reminders
+- Quick actions
 
 ### Time Tracking
 - Start/stop timer for tasks
 - Track multiple time entries
 - View time reports
 - Analyze time spent by project/client
+- Reset timer functionality
 
 ### Comments
 - Add comments to tasks
@@ -102,6 +169,7 @@ The application uses the following main tables in Supabase:
 - Time distribution
 - Priority distribution
 - Project/Client analytics
+- Employee performance metrics
 
 ## Contributing
 

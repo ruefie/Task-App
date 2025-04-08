@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Trash2, Edit2, Building2, Briefcase, Clock, Play, Pause, StopCircle, Paperclip } from 'lucide-react';
+import { Check, Trash2, Edit2, Building2, Briefcase, Clock, Play, Pause, StopCircle, Paperclip, Copy } from 'lucide-react';
 import styles from '../../styles/Tasks.module.scss';
 
 function TaskList({ 
@@ -10,6 +10,7 @@ function TaskList({
   onStartEditing, 
   onToggleTimer, 
   onPromptResetTimer,
+  onCopyTask,
   formatTime 
 }) {
   return (
@@ -32,12 +33,21 @@ function TaskList({
                   <Check size={20} />
                 </button>
                 <span className={styles.milestone}>{task.milestone}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); }}
-                  className={styles.deleteButton}
-                >
-                  <Trash2 size={20} />
-                </button>
+                <div className={styles.taskActions}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onCopyTask(task); }}
+                    className={styles.copyButton}
+                    title="Copy Task"
+                  >
+                    <Copy size={16} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); }}
+                    className={styles.deleteButton}
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
               </div>
               <div className={styles.listItemContent}>
                 <div className={styles.taskHeader}>
@@ -112,29 +122,6 @@ function TaskList({
                     <div className={styles.sessionInfo}>
                       <span>{task.timerEntries.length} sessions</span>
                     </div>
-                    {(task.timerEntries || []).length > 0 && (
-                      <div className={styles.timerEntries}>
-                        <h5>Timer Entries:</h5>
-                        <div className={styles.entriesList}>
-                          {(task.timerEntries || []).map((entry, index) => {
-                            const start = new Date(entry.start_time).toLocaleTimeString();
-                            const end = entry.end_time ? new Date(entry.end_time).toLocaleTimeString() : "Running";
-                            const duration = formatTime(
-                              entry.duration ||
-                              Math.floor((new Date() - new Date(entry.start_time)) / 1000)
-                            );
-                            return (
-                              <div key={index} className={styles.timerEntry}>
-                                <span>{start}</span>
-                                <span>→</span>
-                                <span>{end}</span>
-                                <span className={styles.duration}>{duration}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
