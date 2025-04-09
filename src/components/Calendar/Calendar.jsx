@@ -349,6 +349,14 @@ function Calendar() {
             {date.toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}
           </span>
         </div>
+        <div className={styles.dayActions}>
+            <button className={styles.addDayTask} onClick={() => handleDateClick(date.getDate())}>
+              Add Task <Plus size={16} />
+            </button>
+            <button className={styles.addDayNote} onClick={() => handleAddNote(date.getDate())}>
+              Add Note <StickyNote size={16} />
+            </button>
+          </div>
         <div className={styles.dayContent}>
           {(tasksForDay.length > 0 || notesForDay.length > 0) ? (
             <>
@@ -357,7 +365,7 @@ function Calendar() {
                   <h4>Tasks</h4>
                   {tasksForDay.map(task => (
                     <div key={task.id} className={`${styles.dayTaskItem} ${getPriorityClass(task.priority)}`}>
-                      <span className={styles.taskTime}>{task.start_time || '00:00'}</span>
+                      {/* <span className={styles.taskTime}>{task.start_time || '00:00'}</span> */}
                       <span className={styles.taskName}>{task.name}</span>
                     </div>
                   ))}
@@ -367,12 +375,14 @@ function Calendar() {
                 <div className={styles.dayNotesList}>
                   <h4>Notes</h4>
                   {notesForDay.map(note => (
+                    <div className={styles.dayNoteItem} key={note.id}>
                     <Note
                       key={note.id}
                       note={note}
                       onEdit={handleEditNote}
                       onDelete={handleDeleteNote}
                     />
+                     </div>
                   ))}
                 </div>
               )}
@@ -380,14 +390,7 @@ function Calendar() {
           ) : (
             <div className={styles.noItems}>No tasks or notes scheduled for this day</div>
           )}
-          <div className={styles.dayActions}>
-            <button className={styles.addDayTask} onClick={() => handleDateClick(date.getDate())}>
-              Add Task <Plus size={16} />
-            </button>
-            <button className={styles.addDayNote} onClick={() => handleAddNote(date.getDate())}>
-              Add Note <StickyNote size={16} />
-            </button>
-          </div>
+         
         </div>
       </div>
     );
@@ -412,6 +415,21 @@ function Calendar() {
                   <span className={styles.weekDayName}>{date.toLocaleDateString('default', { weekday: 'short' })}</span>
                   <span className={styles.weekDayNumber}>{day}</span>
                 </div>
+                {/* <div className={styles.weekDayBody}> */}
+                <div className={styles.weekDayActions}>
+                    <button 
+                      className={styles.addWeekTask} 
+                      onClick={() => { setCurrentMonth(date); handleDateClick(day); }}
+                    >
+                      <Plus size={14} />
+                    </button>
+                    <button 
+                      className={styles.addWeekNote}
+                      onClick={() => { setCurrentMonth(date); handleAddNote(day); }}
+                    >
+                      <StickyNote size={14} />
+                    </button>
+                  </div>
                 <div className={styles.weekDayContent}>
                   {tasksForDay.length > 0 && (
                     <div className={styles.weekTasksList}>
@@ -431,21 +449,9 @@ function Calendar() {
                       ))}
                     </div>
                   )}
-                  <div className={styles.weekDayActions}>
-                    <button 
-                      className={styles.addWeekTask} 
-                      onClick={() => { setCurrentMonth(date); handleDateClick(day); }}
-                    >
-                      <Plus size={14} />
-                    </button>
-                    <button 
-                      className={styles.addWeekNote}
-                      onClick={() => { setCurrentMonth(date); handleAddNote(day); }}
-                    >
-                      <StickyNote size={14} />
-                    </button>
-                  </div>
+                 
                 </div>
+                {/* </div> */}
               </div>
             );
           })}

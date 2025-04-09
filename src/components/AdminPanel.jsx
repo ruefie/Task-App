@@ -306,6 +306,7 @@ function AdminPanel() {
                   setEditingCustomer(null);
                   setCustomerFormData({ name: '', contact_person: '', email: '', phone: '', address: '' });
                 }
+              
               }}
               className={styles.addButton}
             >

@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Building2, Briefcase, Paperclip, X, Save } from 'lucide-react';
 import styles from '../../styles/Tasks.module.scss';
 import { tasksService } from '../../lib/tasks';
+import { adminService } from '../../lib/admin';
 
 function TaskForm({ onClose, editingTask, setTasks, onTaskAdded, initialData, copyData }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [employees, setEmployees] = useState([]);
   const fileInputRef = useRef(null);
   const [taskData, setTaskData] = useState({
     name: "",
@@ -24,14 +26,26 @@ function TaskForm({ onClose, editingTask, setTasks, onTaskAdded, initialData, co
   });
 
   useEffect(() => {
-    // Initialize form with either editingTask, initialData, or default values
+    // Load employees for assignee dropdown
+    const loadEmployees = async () => {
+      try {
+        const employeesData = await adminService.getEmployees();
+        setEmployees(employeesData);
+      } catch (error) {
+        console.error('Error loading employees:', error);
+        setError('Failed to load employees list');
+      }
+    };
+    loadEmployees();
+  }, []);
+
+  useEffect(() => {
     if (editingTask) {
       setTaskData(editingTask);
     } else if (initialData) {
       setTaskData({
         ...taskData,
         ...initialData,
-        // Ensure these fields are always reset for copied tasks
         timeSpent: 0,
         timerEntries: [],
         isTimerRunning: false,
@@ -122,6 +136,7 @@ function TaskForm({ onClose, editingTask, setTasks, onTaskAdded, initialData, co
     if (copyData) return "Copy Task";
     return "Add Task";
   };
+
   return (
     <div className={styles.formCard}>
       <div className={styles.formHeader}>
@@ -227,14 +242,24 @@ function TaskForm({ onClose, editingTask, setTasks, onTaskAdded, initialData, co
         </div>
         <div className={styles.formGroup}>
           <label htmlFor="assignee">Assignee</label>
-          <input
-            type="text"
+          <select
             id="assignee"
             name="assignee"
             value={taskData.assignee}
             onChange={handleInputChange}
             required
-          />
+            className={styles.select}
+          >
+            <option value="">Select Assignee</option>
+            {employees.map((employee) => (
+              <option 
+                key={employee.id} 
+                value={`${employee.first_name} ${employee.last_name}`}
+              >
+                {employee.first_name} {employee.last_name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className={styles.formGroup}>
           <label htmlFor="description">Task Description</label>

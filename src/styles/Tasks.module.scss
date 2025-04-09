@@ -35,22 +35,24 @@ $warning-color: #f59e0b;
 
 .analyticsToggle {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  color: #495057;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    background-color: #e9ecef;
-    border-color: #ced4da;
-  }
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: $hover-bg;
+      border: 1px solid $border-color;
+      border-radius: 0.375rem;
+      color: color.adjust($text-color, $lightness: 20%);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        background-color: color.adjust($hover-bg, $lightness: -2%);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        color: $text-color;
+      }
 
   svg {
     width: 1.25rem;
@@ -88,22 +90,24 @@ $warning-color: #f59e0b;
 
 .refreshButton {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  color: #495057;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    background-color: #e9ecef;
-    border-color: #ced4da;
-  }
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: $hover-bg;
+      border: 1px solid $border-color;
+      border-radius: 0.375rem;
+      color: color.adjust($text-color, $lightness: 20%);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover {
+        background-color: color.adjust($hover-bg, $lightness: -2%);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        color: $text-color;
+      }
 
   &:active {
     background-color: #dee2e6;
@@ -149,6 +153,7 @@ $warning-color: #f59e0b;
   
   &:hover {
     background-color: color.adjust($primary-color, $lightness: -5%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -253,6 +258,7 @@ $warning-color: #f59e0b;
     
     &:hover {
       background-color: color.adjust($hover-bg, $lightness: -2%);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     }
   }
   
@@ -312,7 +318,8 @@ $warning-color: #f59e0b;
     color: $text-color;
     
     &:hover:not(:disabled) {
-      background-color: $hover-bg;
+      background-color: color.adjust($white, $lightness: 1%);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     }
   }
   
@@ -326,6 +333,7 @@ $warning-color: #f59e0b;
     
     &:hover:not(:disabled) {
       background-color: color.adjust($primary-color, $lightness: -5%);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     }
   }
 }

@@ -83,7 +83,9 @@ $success-color: #10b981;
     transition: all 0.2s;
     
     &:hover {
-      background-color: $hover-bg;
+      border-color: color.adjust($border-color, $lightness: -2%);
+      background-color: color.adjust($hover-bg, $lightness: 3%);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     }
     
     .buttonIcon {
@@ -160,7 +162,9 @@ $success-color: #10b981;
     transition: all 0.2s;
     
     &:hover {
-      background-color: $hover-bg;
+      background-color: color.adjust($hover-bg, $lightness: 3%);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+
     }
     
     .buttonIcon {
