@@ -22,10 +22,22 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   const [timers, setTimers] = useState({});
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [copyFromTask, setCopyFromTask] = useState(null);
+  const [previousMilestones, setPreviousMilestones] = useState({});
 
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
+
+  useEffect(() => {
+    // Store initial milestones for all tasks
+    const milestones = {};
+    tasks.forEach(task => {
+      if (!previousMilestones[task.id]) {
+        milestones[task.id] = task.milestone;
+      }
+    });
+    setPreviousMilestones(prev => ({ ...prev, ...milestones }));
+  }, [tasks]);
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -40,7 +52,6 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   };
 
   const handleCopyTask = (task) => {
-    // Create a clean copy of the task without internal fields
     const taskCopy = {
       name: `${task.name} (Copy)`,
       milestone: task.milestone,
@@ -68,12 +79,18 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     const newTasks = [...tasks];
     const [movedTask] = newTasks.splice(newTasks.findIndex((t) => t.id === draggableId), 1);
     const newMilestone = destination.droppableId;
-    movedTask.milestone = newMilestone;
+
+    // Store the previous milestone before updating
     if (newMilestone === "Done") {
-      movedTask.completed = true;
-    } else if (movedTask.completed && newMilestone !== "Done") {
-      movedTask.completed = false;
+      setPreviousMilestones(prev => ({
+        ...prev,
+        [draggableId]: movedTask.milestone
+      }));
     }
+
+    movedTask.milestone = newMilestone;
+    movedTask.completed = newMilestone === "Done";
+
     newTasks.splice(newTasks.findIndex((t) => t.milestone === newMilestone) + destination.index, 0, movedTask);
     setTasks(newTasks);
     try {
@@ -92,11 +109,19 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     if (!task) return;
     try {
       const newCompleted = !task.completed;
-      const updatedData = { 
+      const updatedData = {
         completed: newCompleted,
-        milestone: newCompleted ? "Done" : task.milestone
+        milestone: newCompleted ? "Done" : (previousMilestones[id] || task.milestone)
       };
-      
+
+      // Store the current milestone before moving to Done
+      if (newCompleted) {
+        setPreviousMilestones(prev => ({
+          ...prev,
+          [id]: task.milestone
+        }));
+      }
+
       await tasksService.updateTask(id, updatedData);
       setTasks((prev) =>
         prev.map((t) => (t.id === id ? { ...t, ...updatedData } : t))
@@ -118,6 +143,11 @@ function Tasks({ onTaskAdded, initialTaskData }) {
         });
       }
       setTasks((prev) => prev.filter((task) => task.id !== id));
+      setPreviousMilestones(prev => {
+        const newMilestones = { ...prev };
+        delete newMilestones[id];
+        return newMilestones;
+      });
     } catch (error) {
       console.error("Error deleting task:", error);
     }

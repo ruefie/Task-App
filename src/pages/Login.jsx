@@ -15,6 +15,22 @@ function Login() {
   const { signIn, signOut, user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [notification, setNotification] = useState("");
+
+  useEffect(() => {
+    // If a message exists in location state, set it in local state.
+    if (location.state?.message) {
+      setNotification(location.state.message);
+      // Clear the router state after 3 seconds
+      const timer = setTimeout(() => {
+        setNotification("");
+        // Clear the state from the URL by navigating to the same path with empty state
+        navigate(location.pathname, { replace: true, state: {} });
+      }, 3000); // adjust duration as needed
+
+      return () => clearTimeout(timer);
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -79,10 +95,10 @@ function Login() {
           </Link>
         </p>
         
-        {success && (
+        {notification && (
           <div className={styles.success}>
-            <CheckCircle size={16} />
-            {success}
+            <CheckCircle size={16} style={{ marginRight: '8px' }} />
+            {notification}
           </div>
         )}
         

@@ -1,4 +1,7 @@
 // Variables
+@use "sass:map";
+@use "sass:color";
+
 $colors: (
   primary: #3b82f6,
   primary-light: #dbeafe,
@@ -60,7 +63,7 @@ $radius: (
   }
 }
 
-@mixin grid($columns: 1, $gap: map-get($spacing, base)) {
+@mixin grid($columns: 1, $gap: map.get($spacing, base)) {
   display: grid;
   grid-template-columns: $columns;
   gap: $gap;
@@ -68,44 +71,44 @@ $radius: (
 
 // Styles
 .container {
-  padding: map-get($spacing, xl);
+  // padding: map.get($spacing, sm);
 }
 
 .header {
   @include flex(row, space-between, center);
-  margin-bottom: map-get($spacing, '2xl');
+  margin-bottom: map.get($spacing, '2xl');
   
   h1 {
     margin: 0;
     font-size: 1.875rem;
     font-weight: 600;
-    color: map-get($colors, gray-900);
+    color: map.get($colors, gray-900);
   }
 }
 
 .headerButtons {
-  @include flex(row, flex-start, center, map-get($spacing, md));
+  @include flex(row, flex-start, center, map.get($spacing, md));
 }
 
 %button-base {
-  @include flex(row, center, center, map-get($spacing, sm));
-  padding: map-get($spacing, sm) map-get($spacing, base);
-  background-color: map-get($colors, gray-50);
-  border: 1px solid map-get($colors, gray-200);
-  border-radius: map-get($radius, md);
-  color: map-get($colors, gray-600);
+  @include flex(row, center, center, map.get($spacing, sm));
+  padding: map.get($spacing, sm) map.get($spacing, base);
+  background-color: map.get($colors, gray-50);
+  border: 1px solid map.get($colors, gray-200);
+  border-radius: map.get($radius, md);
+  color: map.get($colors, gray-600);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    background-color: map-get($colors, gray-100);
-    border-color: map-get($colors, gray-300);
+    background-color: map.get($colors, gray-100);
+    border-color: map.get($colors, gray-300);
   }
 
   &:active {
-    background-color: map-get($colors, gray-200);
+    background-color: map.get($colors, gray-200);
   }
 
   &:disabled {
@@ -133,87 +136,87 @@ $radius: (
 }
 
 .error {
-  padding: map-get($spacing, base);
-  margin-bottom: map-get($spacing, base);
-  background-color: map-get($colors, danger-light);
-  border: 1px solid map-get($colors, danger);
-  border-radius: map-get($radius, md);
-  color: map-get($colors, danger-dark);
+  padding: map.get($spacing, base);
+  margin-bottom: map.get($spacing, base);
+  background-color: map.get($colors, danger-light);
+  border: 1px solid map.get($colors, danger);
+  border-radius: map.get($radius, md);
+  color: map.get($colors, danger-dark);
 }
 
 .dashboard {
-  @include flex(column, flex-start, stretch, map-get($spacing, xl));
+  @include flex(column, flex-start, stretch, map.get($spacing, xl));
 }
 
 .overviewGrid {
-  @include grid(repeat(auto-fit, minmax(250px, 1fr)), map-get($spacing, base));
+  @include grid(repeat(auto-fit, minmax(350px, 1fr)), map.get($spacing, base));
 }
 
 .card {
-  background-color: map-get($colors, white);
-  border-radius: map-get($radius, lg);
-  padding: map-get($spacing, lg);
-  box-shadow: map-get($shadows, sm);
+  background-color: map.get($colors, white);
+  border-radius: map.get($radius, lg);
+  padding: map.get($spacing, lg);
+  box-shadow: map.get($shadows, sm);
 }
 
 .cardHeader {
-  @include flex(row, flex-start, center, map-get($spacing, md));
-  margin-bottom: map-get($spacing, base);
+  @include flex(row, flex-start, center, map.get($spacing, md));
+  margin-bottom: map.get($spacing, base);
 
   h3 {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: map-get($colors, gray-900);
+    color: map.get($colors, gray-900);
   }
 
   svg {
-    color: map-get($colors, gray-500);
+    color: map.get($colors, gray-500);
   }
 }
 
 .cardContent {
-  @include flex(column, flex-start, stretch, map-get($spacing, md));
+  @include flex(column, flex-start, stretch, map.get($spacing, md));
 }
 
 .stat {
   @include flex(row, space-between, center);
   font-size: 0.875rem;
-  color: map-get($colors, gray-600);
+  color: map.get($colors, gray-600);
 
   .value {
     font-weight: 600;
-    color: map-get($colors, gray-900);
+    color: map.get($colors, gray-900);
   }
 }
 
 // Priority colors
 .urgent {
-  color: map-get($colors, danger);
+  color: map.get($colors, danger);
 }
 
 .high {
-  color: map-get($colors, warning);
+  color: map.get($colors, warning);
 }
 
 .normal {
-  color: map-get($colors, primary);
+  color: map.get($colors, primary);
 }
 
 // Employee Section
 .employeeSection {
-  margin-top: map-get($spacing, base);
+  margin-top: map.get($spacing, base);
 }
 
 .employeeList {
-  @include grid(repeat(auto-fill, minmax(300px, 1fr)), map-get($spacing, base));
+  @include grid(repeat(auto-fill, minmax(300px, 1fr)), map.get($spacing, base));
 }
 
 .employeeItem {
-  background-color: map-get($colors, white);
-  border-radius: map-get($radius, lg);
-  padding: map-get($spacing, base);
-  box-shadow: map-get($shadows, md);
+  background-color: map.get($colors, white);
+  border-radius: map.get($radius, lg);
+  padding: map.get($spacing, base);
+  box-shadow: map.get($shadows, sm);
   transition: transform 0.2s ease;
 
   &:hover {
@@ -223,98 +226,98 @@ $radius: (
 
 .employeeHeader {
   @include flex(row, space-between, center);
-  margin-bottom: map-get($spacing, base);
+  margin-bottom: map.get($spacing, base);
 }
 
 .employeeName {
   font-size: 1rem;
   font-weight: 600;
-  color: map-get($colors, gray-900);
+  color: map.get($colors, gray-900);
 }
 
 .totalTasks {
   @include flex(row, center, center);
-  padding: map-get($spacing, xs) map-get($spacing, md);
-  background-color: map-get($colors, gray-100);
-  border-radius: map-get($radius, full);
+  padding: map.get($spacing, xs) map.get($spacing, md);
+  background-color: map.get($colors, gray-100);
+  border-radius: map.get($radius, full);
   font-size: 0.875rem;
 
   .count {
     font-weight: 600;
-    color: map-get($colors, gray-900);
-    margin-left: map-get($spacing, sm);
+    color: map.get($colors, gray-900);
+    margin-left: map.get($spacing, sm);
   }
 }
 
 .statsGrid {
-  @include grid(repeat(4, 1fr), map-get($spacing, sm));
-  margin-bottom: map-get($spacing, md);
+  @include grid(repeat(4, 1fr), map.get($spacing, sm));
+  margin-bottom: map.get($spacing, md);
 }
 
 .statBox {
-  padding: map-get($spacing, sm);
-  background-color: map-get($colors, gray-50);
-  border-radius: map-get($radius, md);
+  padding: map.get($spacing, sm);
+  background-color: map.get($colors, gray-50);
+  border-radius: map.get($radius, md);
   text-align: center;
 
   .label {
     font-size: 0.75rem;
-    color: map-get($colors, gray-500);
-    margin-bottom: map-get($spacing, xs);
+    color: map.get($colors, gray-500);
+    margin-bottom: map.get($spacing, xs);
     display: block;
   }
 
   .value {
     font-size: 1rem;
     font-weight: 600;
-    color: map-get($colors, gray-900);
+    color: map.get($colors, gray-900);
   }
 }
 
 .priorityBadges {
-  @include flex(row, flex-start, center, map-get($spacing, sm));
+  @include flex(row, flex-start, center, map.get($spacing, sm));
 }
 
 .badge {
-  padding: map-get($spacing, xs) map-get($spacing, sm);
-  border-radius: map-get($radius, md);
+  padding: map.get($spacing, xs) map.get($spacing, sm);
+  border-radius: map.get($radius, md);
   font-size: 0.75rem;
   font-weight: 500;
-  @include flex(row, center, center, map-get($spacing, xs));
+  @include flex(row, center, center, map.get($spacing, xs));
 
   &.normal {
-    background-color: map-get($colors, primary-light);
-    color: map-get($colors, primary-dark);
+    background-color: map.get($colors, primary-light);
+    color: map.get($colors, primary-dark);
   }
 
   &.high {
-    background-color: map-get($colors, warning-light);
-    color: map-get($colors, warning-dark);
+    background-color: map.get($colors, warning-light);
+    color: map.get($colors, warning-dark);
   }
 
   &.urgent {
-    background-color: map-get($colors, danger-light);
-    color: map-get($colors, danger-dark);
+    background-color: map.get($colors, danger-light);
+    color: map.get($colors, danger-dark);
   }
 }
 
 // Distribution Section
 .distributionSection {
-  @include grid(repeat(auto-fit, minmax(400px, 1fr)), map-get($spacing, xl));
+  @include grid(repeat(auto-fit, minmax(400px, 1fr)), map.get($spacing, xl));
 }
 
 .distributionList {
-  @include flex(column, flex-start, stretch, map-get($spacing, md));
+  @include flex(column, flex-start, stretch, map.get($spacing, md));
 }
 
 .distributionItem {
-  @include grid(2fr 3fr 1fr, map-get($spacing, base));
+  @include grid(2fr 3fr 1fr, map.get($spacing, base));
   align-items: center;
   font-size: 0.875rem;
 }
 
 .label {
-  color: map-get($colors, gray-600);
+  color: map.get($colors, gray-600);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -322,91 +325,129 @@ $radius: (
 
 .bar {
   height: 0.5rem;
-  background-color: map-get($colors, gray-200);
-  border-radius: map-get($radius, sm);
+  background-color: map.get($colors, gray-200);
+  border-radius: map.get($radius, sm);
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
-  background-color: map-get($colors, primary);
-  border-radius: map-get($radius, sm);
+  background-color: map.get($colors, primary);
+  border-radius: map.get($radius, sm);
   transition: width 0.3s ease;
 }
 
 .count {
-  color: map-get($colors, gray-900);
+  color: map.get($colors, gray-900);
   font-weight: 500;
   text-align: right;
 }
 
 // Activity Section
 .activitySection {
-  @include grid(repeat(auto-fit, minmax(400px, 1fr)), map-get($spacing, xl));
+  @include grid(repeat(auto-fit, minmax(400px, 1fr)), map.get($spacing, xl));
 }
 
 .activityList {
-  @include flex(column, flex-start, stretch, map-get($spacing, md));
+  @include flex(column, flex-start, stretch, map.get($spacing, md));
 }
 
 .activityItem {
   @include flex(row, space-between, center);
-  padding: map-get($spacing, md);
-  background-color: map-get($colors, gray-50);
-  border-radius: map-get($radius, md);
+  padding: map.get($spacing, md);
+  background-color: map.get($colors, gray-50);
+  border-radius: map.get($radius, md);
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: map-get($colors, gray-100);
+    background-color: map.get($colors, gray-100);
   }
 
   &.normal {
-    border-left: 3px solid map-get($colors, primary);
+    border-left: 3px solid map.get($colors, primary);
   }
 
   &.high {
-    border-left: 3px solid map-get($colors, warning);
+    border-left: 3px solid map.get($colors, warning);
   }
 
   &.urgent {
-    border-left: 3px solid map-get($colors, danger);
+    border-left: 3px solid map.get($colors, danger);
   }
 }
 
 .activityContent {
-  @include flex(column, flex-start, stretch, map-get($spacing, xs));
+  @include flex(column, flex-start, stretch, map.get($spacing, xs));
 }
 
 .activityTitle {
   font-size: 0.875rem;
   font-weight: 500;
-  color: map-get($colors, gray-900);
+  color: map.get($colors, gray-900);
 }
 
 .activityMeta {
   font-size: 0.75rem;
-  color: map-get($colors, gray-500);
+  color: map.get($colors, gray-500);
 }
 
 .tag {
-  padding: map-get($spacing, xs) map-get($spacing, sm);
-  border-radius: map-get($radius, sm);
+  padding: map.get($spacing, xs) map.get($spacing, sm);
+  border-radius: map.get($radius, sm);
   font-size: 0.75rem;
   font-weight: 500;
   
   &.urgent {
-    background-color: map-get($colors, danger-light);
-    color: map-get($colors, danger);
+    background-color: map.get($colors, danger-light);
+    color: map.get($colors, danger);
   }
   
   &.high {
-    background-color: map-get($colors, warning-light);
-    color: map-get($colors, warning);
+    background-color: map.get($colors, warning-light);
+    color: map.get($colors, warning);
   }
   
   &.normal {
-    background-color: map-get($colors, primary-light);
-    color: map-get($colors, primary);
+    background-color: map.get($colors, primary-light);
+    color: map.get($colors, primary);
+  }
+}
+
+// Graph Container Styles
+.graphContainer {
+  background-color: map.get($colors, white);
+  border-radius: map.get($radius, lg);
+  padding: map.get($spacing, lg);
+  box-shadow: map.get($shadows, sm);
+  margin-bottom: map.get($spacing, xl);
+
+  .graphGrid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: map.get($spacing, lg);
+  }
+
+  .mainGraph, .sideGraph {
+    .graphTitle {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: map.get($colors, gray-900);
+      margin-bottom: map.get($spacing, lg);
+    }
+
+    .graph {
+      height: 300px;
+      position: relative;
+    }
+  }
+
+  .sideGraph {
+    .graph {
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 }
 
@@ -419,17 +460,29 @@ $radius: (
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .graphContainer {
+    .graphGrid {
+      grid-template-columns: 1fr;
+    }
+
+    .sideGraph {
+      .graph {
+        height: 250px;
+      }
+    }
+  }
 }
 
 @media (max-width: 768px) {
   .container {
-    padding: map-get($spacing, base);
+    padding: map.get($spacing, base);
   }
 
   .header {
     flex-direction: column;
     align-items: flex-start;
-    gap: map-get($spacing, base);
+    gap: map.get($spacing, base);
   }
 
   .headerButtons {
@@ -456,5 +509,15 @@ $radius: (
 
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .graphContainer {
+    padding: map.get($spacing, base);
+    
+    .mainGraph, .sideGraph {
+      .graph {
+        height: 250px;
+      }
+    }
   }
 }

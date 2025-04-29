@@ -18,7 +18,7 @@ import {
 import styles from '../styles/Dashboard.module.scss';
 
 // Lazy load components
-const Home = lazy(() => import('../components/Home.jsx'));
+const Home = lazy(() => import('../components/Home/Home.jsx'));
 const Calendar = lazy(() => import('../components/Calendar/Calendar.jsx'));
 const Tasks = lazy(() => import('../components/Tasks/Tasks.jsx'));
 const Profile = lazy(() => import('../components/Profile.jsx'));

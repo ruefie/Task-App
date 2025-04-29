@@ -115,3 +115,16 @@ CREATE POLICY "Users can delete their own comments or admin can delete any comme
     user_id = auth.uid() 
     OR EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
+
+  CREATE POLICY "Allow authenticated select on task_comments"
+  ON public.task_comments
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- And on profiles:
+CREATE POLICY "Allow authenticated select on profiles"
+  ON public.profiles
+  FOR SELECT
+  TO authenticated
+  USING (true);

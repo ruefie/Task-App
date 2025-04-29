@@ -51,7 +51,7 @@ export const profilesService = {
       
       const { data, error } = await supabase
         .from('profiles')
-        .insert([{
+        .upsert([{
           id: userId,
           first_name,
           last_name,

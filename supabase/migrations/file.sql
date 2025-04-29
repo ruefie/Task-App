@@ -10,9 +10,6 @@
       - `date` (date)
       - `reminder_date` (date)
       - `reminder_time` (time)
-      - `repeat_type` (text)
-      - `repeat_interval` (integer)
-      - `snooze_duration` (integer)
       - `created_at` (timestamptz)
       - `updated_at` (timestamptz)
 
@@ -24,51 +21,6 @@
 -- Drop existing table and related objects
 DROP TABLE IF EXISTS calendar_notes CASCADE;
 DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;
-DROP TABLE IF EXISTS public.push_subscriptions CASCADE;
-
-CREATE TABLE public.push_subscriptions (
-  id          uuid             PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id     uuid             NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  subscription jsonb           NOT NULL,
-  inserted_at timestamptz      NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Allow users to insert their own push subscription"
-  ON public.push_subscriptions
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (user_id = auth.uid());
-
-
-CREATE POLICY "Allow users to read their own subscriptions"
-  ON public.push_subscriptions
-  FOR SELECT
-  TO authenticated
-  USING (user_id = auth.uid());
-
-CREATE POLICY "Allow users to update their own subscriptions"
-  ON public.push_subscriptions
-  FOR UPDATE
-  TO authenticated
-  USING (user_id = auth.uid());
-
-CREATE POLICY "Allow users to delete their own subscriptions"
-  ON public.push_subscriptions
-  FOR DELETE
-  TO authenticated
-  USING (user_id = auth.uid());
-
-
-
-
-
-
-
-
-
-
 
 -- Recreate the table
 CREATE TABLE calendar_notes (
@@ -79,25 +31,34 @@ CREATE TABLE calendar_notes (
   date date NOT NULL,
   reminder_date date,
   reminder_time time,
-  repeat_type text DEFAULT 'none',
-  repeat_interval integer DEFAULT 1,
-  snooze_duration integer DEFAULT 5,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
   CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
   CONSTRAINT reminder_fields_check CHECK (
     (reminder_date IS NULL AND reminder_time IS NULL) OR 
     (reminder_date IS NOT NULL AND reminder_time IS NOT NULL)
-  ),
-  CONSTRAINT valid_repeat_type CHECK (repeat_type IN ('none', 'daily', 'weekly', 'monthly', 'yearly')),
-  CONSTRAINT valid_repeat_interval CHECK (repeat_interval BETWEEN 1 AND 99),
-  CONSTRAINT valid_snooze_duration CHECK (snooze_duration IN (5, 10, 15, 30, 60))
+  )
 );
 
-ALTER TABLE calendar_notes
-  ADD COLUMN notification_sent boolean NOT NULL DEFAULT false;
-  
 ALTER TABLE calendar_notes ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE calendar_notes 
+  ADD COLUMN repeat_type text DEFAULT 'none',
+  ADD COLUMN repeat_interval integer DEFAULT 1,
+  ADD COLUMN snooze_duration integer DEFAULT 5;
+
+-- Add check constraint for repeat_type
+ALTER TABLE calendar_notes
+  ADD CONSTRAINT valid_repeat_type 
+  CHECK (repeat_type IN ('none', 'daily', 'weekly', 'monthly', 'yearly'));
+
+-- Add check constraints for intervals
+ALTER TABLE calendar_notes
+  ADD CONSTRAINT valid_repeat_interval 
+  CHECK (repeat_interval BETWEEN 1 AND 99),
+  ADD CONSTRAINT valid_snooze_duration 
+  CHECK (snooze_duration IN (5, 10, 15, 30, 60));
+
 
 -- Recreate policies
 CREATE POLICY "Users can read their own notes"

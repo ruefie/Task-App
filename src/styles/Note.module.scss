@@ -1,3 +1,6 @@
+@use "sass:map";
+@use "sass:color";
+
 // Variables
 $colors: (
   primary: #3b82f6,
@@ -32,15 +35,15 @@ $radius: (
 );
 
 .noteItem {
-  background-color: map-get($colors, white);
-  border-radius: map-get($radius, md);
-  padding: map-get($spacing, md);
-  border: 1px solid map-get($colors, gray-200);
+  background-color: map.get($colors, white);
+  border-radius: map.get($radius, md);
+  padding: map.get($spacing, md);
+  border: 1px solid map.get($colors, gray-200);
   transition: all 0.2s;
-  margin-bottom: map-get($spacing, sm);
+  margin-bottom: map.get($spacing, sm);
 
   &:hover {
-    border-color: map-get($colors, gray-300);
+    border-color: map.get($colors, gray-300);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 }
@@ -49,27 +52,27 @@ $radius: (
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: map-get($spacing, sm);
+  margin-bottom: map.get($spacing, sm);
 
   h4 {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: map-get($colors, gray-900);
+    color: map.get($colors, gray-900);
   }
 }
 
 .noteActions {
   display: flex;
-  gap: map-get($spacing, sm);
+  gap: map.get($spacing, sm);
 }
 
 .editButton,
 .deleteButton {
   background: none;
   border: none;
-  padding: map-get($spacing, xs);
-  border-radius: map-get($radius, sm);
+  padding: map.get($spacing, xs);
+  border-radius: map.get($radius, sm);
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -77,15 +80,15 @@ $radius: (
   justify-content: center;
 
   &:hover {
-    background-color: map-get($colors, gray-100);
+    background-color: map.get($colors, gray-100);
   }
 }
 
 .editButton {
-  color: map-get($colors, primary);
+  color: map.get($colors, primary);
 
   &:hover {
-    color: map-get($colors, primary-dark);
+    color: map.get($colors, primary-dark);
   }
 }
 
@@ -99,29 +102,72 @@ $radius: (
 
 .noteContent {
   font-size: 0.875rem;
-  color: map-get($colors, gray-600);
-  margin: map-get($spacing, sm) 0;
+  color: map.get($colors, gray-600);
+  margin: map.get($spacing, sm) 0;
   line-height: 1.5;
 }
 
 .noteFooter {
   display: flex;
   align-items: center;
-  gap: map-get($spacing, md);
-  margin-top: map-get($spacing, sm);
-  padding-top: map-get($spacing, sm);
-  border-top: 1px solid map-get($colors, gray-200);
+  gap: map.get($spacing, md);
+  margin-top: map.get($spacing, sm);
+  padding-top: map.get($spacing, sm);
+  border-top: 1px solid map.get($colors, gray-200);
   font-size: 0.75rem;
-  color: map-get($colors, gray-500);
+  color: map.get($colors, gray-500);
 }
 
 .noteDate,
 .reminderInfo {
   display: flex;
   align-items: center;
-  gap: map-get($spacing, xs);
+  gap: map.get($spacing, xs);
 
   svg {
-    color: map-get($colors, primary);
+    color: map.get($colors, primary);
   }
+}
+
+.snoozeButton {
+  background: none;
+  border: none;
+  padding: map.get($spacing, xs);
+  border-radius: map.get($radius, sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+
+  &:hover {
+    background-color: #f3f4f6;
+    color: #3b82f6;
+  }
+}
+
+.repeatInfo {
+  display: flex;
+  align-items: center;
+  gap: map.get($spacing, xs);
+  font-size: 0.75rem;
+  color: #6b7280;
+
+  svg {
+    color: #3b82f6;
+  }
+}
+
+@keyframes bellRing {
+  0%, 100% {
+    transform: rotate(0);
+  }
+  20%, 60% {
+    transform: rotate(15deg);
+  }
+  40%, 80% {
+    transform: rotate(-15deg);
+  }
+}
+
+.ringing {
+  animation: bellRing 1s ease infinite;
 }

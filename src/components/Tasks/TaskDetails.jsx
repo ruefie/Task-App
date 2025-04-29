@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Paperclip, Clock, Copy } from 'lucide-react';
 import TaskComments from './TaskComments';
 import { commentsService } from '../../lib/comments';
-import styles from '../../styles/Tasks.module.scss';
+import styles from '../../styles/TaskDetails.module.scss';
 
 function TaskDetails({ task, onClose, formatTime, onCopyTask }) {
   const [comments, setComments] = useState([]);
@@ -33,6 +33,26 @@ function TaskDetails({ task, onClose, formatTime, onCopyTask }) {
     } catch (err) {
       console.error('Error adding comment:', err);
       setError('Failed to add comment');
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await commentsService.deleteComment(commentId);
+      loadComments();
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+      setError('Failed to delete comment');
+    }
+  };
+
+  const handleUpdateComment = async (commentId, updatedContent) => {
+    try {
+      await commentsService.updateComment(commentId, updatedContent);
+      loadComments();
+    } catch (err) {
+      console.error('Error updating comment:', err);
+      setError('Failed to update comment');
     }
   };
 
@@ -127,6 +147,8 @@ function TaskDetails({ task, onClose, formatTime, onCopyTask }) {
             taskId={task.id}
             comments={comments}
             onAddComment={handleAddComment}
+            onDeleteComment={handleDeleteComment}
+            onUpdateComment={handleUpdateComment}
           />
         </div>
       </div>

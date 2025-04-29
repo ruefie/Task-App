@@ -73,6 +73,7 @@ export function AuthProvider({ children }) {
 
   const signUp = async (data) => {
     try {
+      // Attempt to sign up the user.
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -82,16 +83,24 @@ export function AuthProvider({ children }) {
         },
       });
       if (error) throw error;
+  
+      // If there's additional profile data, create (or upsert) the profile.
       if (authData.user && data.options?.data) {
         await profilesService.createProfile(authData.user.id, data.options.data);
       }
+  
+      // Sign the user out immediately to prevent auto-login.
+      await supabase.auth.signOut();
+  
+      // Return success; the Register component will handle showing the message and redirection.
       return { data: authData, error: null };
     } catch (err) {
       console.error("Error in signUp:", err);
       return { data: null, error: err };
     }
   };
-
+  
+  
   const signIn = async (data) => {
     try {
       const { data: authData, error } = await supabase.auth.signInWithPassword({

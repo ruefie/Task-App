@@ -12,8 +12,8 @@ import {
   Timer,
   Activity
 } from 'lucide-react';
-import { useTasks } from '../contexts/TasksContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useTasks } from '../../contexts/TasksContext';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from '../styles/Home.module.scss';
 
 function Home() {

@@ -1,199 +1,220 @@
-// Variables
-$colors: (
-  primary: #3b82f6,
-  primary-light: #dbeafe,
-  primary-dark: #1d4ed8,
-  secondary: #6b7280,
-  gray-50: #f9fafb,
-  gray-100: #f3f4f6,
-  gray-200: #e5e7eb,
-  gray-300: #d1d5db,
-  gray-400: #9ca3af,
-  gray-500: #6b7280,
-  gray-600: #4b5563,
-  gray-700: #374151,
-  gray-800: #1f2937,
-  gray-900: #111827,
-  white: #ffffff
-);
-
-$spacing: (
-  xs: 0.25rem,
-  sm: 0.5rem,
-  md: 0.75rem,
-  base: 1rem,
-  lg: 1.25rem,
-  xl: 1.5rem
-);
-
-$radius: (
-  sm: 0.25rem,
-  md: 0.375rem,
-  lg: 0.5rem
-);
-
 .noteForm {
-  background-color: map-get($colors, white);
-  border-radius: map-get($radius, lg);
-  padding: map-get($spacing, xl);
   width: 100%;
-  max-width: 500px;
-}
+  max-width: 600px;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.5rem;
 
-.noteFormHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: map-get($spacing, xl);
+  .noteFormHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
 
-  h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: map-get($colors, gray-900);
-  }
-
-  .closeButton {
-    background: none;
-    border: none;
-    color: map-get($colors, gray-500);
-    cursor: pointer;
-    padding: map-get($spacing, xs);
-    border-radius: map-get($radius, sm);
-    transition: all 0.2s;
-
-    &:hover {
-      color: map-get($colors, gray-700);
-      background-color: map-get($colors, gray-100);
-    }
-  }
-}
-
-.formGroup {
-  margin-bottom: map-get($spacing, lg);
-
-  label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: map-get($colors, gray-700);
-    margin-bottom: map-get($spacing, sm);
-  }
-
-  input, textarea {
-    width: 100%;
-    padding: map-get($spacing, sm) map-get($spacing, md);
-    border: 1px solid map-get($colors, gray-300);
-    border-radius: map-get($radius, md);
-    font-size: 0.875rem;
-    color: map-get($colors, gray-900);
-    transition: all 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: map-get($colors, primary);
-      box-shadow: 0 0 0 2px map-get($colors, primary-light);
+    h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
     }
 
-    &::placeholder {
-      color: map-get($colors, gray-400);
+    .closeButton {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      
+      &:hover {
+        background-color: #f3f4f6;
+      }
     }
   }
 
-  textarea {
-    resize: vertical;
-    min-height: 100px;
-  }
-}
+  .formGroup {
+    margin-bottom: 1.5rem;
 
-.reminderToggle {
-  margin-bottom: map-get($spacing, sm);
-}
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+    }
 
-.reminderButton {
-  display: flex;
-  align-items: center;
-  gap: map-get($spacing, sm);
-  padding: map-get($spacing, sm) map-get($spacing, md);
-  background-color: map-get($colors, gray-100);
-  border: 1px solid map-get($colors, gray-300);
-  border-radius: map-get($radius, md);
-  color: map-get($colors, gray-600);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
 
-  &:hover {
-    background-color: map-get($colors, gray-200);
-  }
-
-  &.active {
-    background-color: map-get($colors, primary-light);
-    border-color: map-get($colors, primary);
-    color: map-get($colors, primary-dark);
-  }
-}
-
-.reminderInputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: map-get($spacing, md);
-  margin-top: map-get($spacing, md);
-}
-
-.reminderField {
-  label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: map-get($colors, gray-700);
-    margin-bottom: map-get($spacing, xs);
-  }
-}
-
-.reminderDateInput,
-.reminderTimeInput {
-  width: 100%;
-  padding: map-get($spacing, sm) map-get($spacing, md);
-  border: 1px solid map-get($colors, gray-300);
-  border-radius: map-get($radius, md);
-  font-size: 0.875rem;
-  color: map-get($colors, gray-900);
-  transition: all 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: map-get($colors, primary);
-    box-shadow: 0 0 0 2px map-get($colors, primary-light);
-  }
-}
-
-.formButtons {
-  display: flex;
-  justify-content: flex-end;
-  gap: map-get($spacing, md);
-  margin-top: map-get($spacing, xl);
-}
-
-.saveButton {
-  display: flex;
-  align-items: center;
-  gap: map-get($spacing, sm);
-  padding: map-get($spacing, sm) map-get($spacing, lg);
-  background-color: map-get($colors, primary);
-  border: none;
-  border-radius: map-get($radius, md);
-  color: map-get($colors, white);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: map-get($colors, primary-dark);
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      }
+    }
   }
 
-  &:active {
-    transform: translateY(1px);
+  .reminderToggle {
+    margin-bottom: 1rem;
+
+    .reminderButton {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &.active {
+        background-color: #dbeafe;
+        border-color: #3b82f6;
+        color: #1d4ed8;
+      }
+
+      &:hover {
+        background-color: #e5e7eb;
+      }
+    }
+  }
+
+  .reminderSettings {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .reminderInputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    .reminderField {
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        color: #374151;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  .repeatSection,
+  .snoozeSection {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    padding: 1rem;
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      color: #374151;
+
+      svg {
+        color: #6b7280;
+      }
+    }
+
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      background-color: white;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      }
+    }
+  }
+
+  .repeatInterval {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    label {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #374151;
+    }
+
+    input {
+      width: 4rem;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      text-align: center;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      }
+    }
+
+    span {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+
+  .formButtons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+
+    .saveButton {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: #3b82f6;
+      border: none;
+      border-radius: 0.375rem;
+      color: white;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #2563eb;
+      }
+
+      &:active {
+        background-color: #1d4ed8;
+      }
+    }
   }
 }

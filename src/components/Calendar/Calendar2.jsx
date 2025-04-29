@@ -18,7 +18,6 @@ import NoteForm from "./NoteForm";
 import Note from "./Note";
 import styles from "../../styles/Calendar.module.scss";
 import { showNotification, scheduleNotification } from "../../lib/notifications";
-import NotificationToggle from "../NotificationToggle.jsx";
 
 function Calendar() {
   const { isAdmin } = useAuth();
@@ -48,62 +47,16 @@ function Calendar() {
   );
   
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(console.error);
+    if (notifPermission === "default" && Notification.requestPermission) {
+      Notification.requestPermission().then(p => setNotifPermission(p));
     }
-    // if (Notification.requestPermission) {
-    //   Notification.requestPermission().then(p => setNotifPermission(p));
-    // }
-  }, []);
+  }, [notifPermission]);
 
   useEffect(() => {
     loadTasks();
   }, [isAdmin, loadTasks]);
   
-  useEffect(() => {
-    if (notifPermission !== "granted") return; // wait for grant
 
-    const now = Date.now();
-    const justDue = [];
-
-    notes.forEach(note => {
-      if (!note.reminder_date || !note.reminder_time) return;
-      const dt = new Date(
-        `${note.reminder_date}T${note.reminder_time}`
-      ).getTime();
-
-      // 1) for anything _in the future_, schedule the native (or fallback) notification
-      // if (dt > now) {
-      //   scheduleNotification(
-      //     `⏰ Reminder: ${note.title}`,
-      //     note.content,
-      //     dt,
-      //     `note-${note.id}`
-      //   ).catch(console.error);
-      // }
-
-      // 2) if it _just_ passed (within last 30s), queue it for banner + in-app toast
-      if (dt <= now && dt > now - 30_000) {
-        justDue.push(note);
-      }
-    });
-
-    // update the badge count
-    setActiveReminderIds(
-      notes.filter(n => n.reminder_date && n.reminder_time).map(n => n.id)
-    );
-
-    // show banner + in-app toast for any that just became due
-    if (justDue.length) {
-      setDueReminders(justDue);
-      setShowReminderBanner(true);
-      setSnoozeCountdown(10);
-      showNotification("Reminder", justDue[0].title, {
-        onSnooze: minutes => handleSnoozeNote(justDue[0], minutes),
-        timeout: 0,
-      });
-    }
-  }, [notes, notifPermission]);
    // 2) whenever our `notes` list changes, schedule all future reminders
    useEffect(() => {
        const now = Date.now();
@@ -114,12 +67,12 @@ function Calendar() {
          const dt = new Date(`${note.reminder_date}T${note.reminder_time}`).getTime();
    
          // schedule the native/fallback notification
-        //  scheduleNotification(
-        //    `⏰ Reminder: ${note.title}`,
-        //    note.content,
-        //    dt,
-        //    `note-${note.id}`             // unique tag so OS won’t duplicate
-        //  );
+         scheduleNotification(
+           `⏰ Reminder: ${note.title}`,
+           note.content,
+           dt,
+           `note-${note.id}`             // unique tag so OS won’t duplicate
+         );
    
          // if it just passed in the last 30s, mark “due”
          if (dt <= now && dt > now - 30000) {
@@ -191,6 +144,16 @@ function Calendar() {
       return () => clearInterval(iv);
     }, [notes]);
 
+    // 4) determine which reminders are “due right now” for the in-app banner
+  // useEffect(() => {
+  //   const now = Date.now();
+  //   const due = notes.filter(note => {
+  //     if (!note.reminder_date || !note.reminder_time) return false;
+  //     const dt = new Date(`${note.reminder_date}T${note.reminder_time}`);
+  //     return Math.abs(dt.getTime() - now) <= 30000; // ±30s window
+  //   });
+  //   setDueReminders(due);
+  // }, [notes]);
   
     // When any dueReminders appear, show the banner
     useEffect(() => {
@@ -741,13 +704,12 @@ function Calendar() {
 
   return (
     <div className={styles.container}>
-      
-      <NotificationToggle />
-      
-{/* {Notification.permission === 'default' && (
-  <NotificationToggle />
-)} */}
-
+      {notifPermission === "denied" && (
+        <div className={styles.notificationBlockedBanner}>
+          You’ve blocked desktop notifications.  
+          Please enable “Notifications” in your browser’s site settings.
+        </div>
+      )}
 
       <div className={styles.titleContainer}>
         <h1>Calendar</h1>

@@ -15,10 +15,11 @@ import {
   Award,
   Target,
 } from "lucide-react";
-import { useTasks } from "../contexts/TasksContext";
-import { useAuth } from "../contexts/AuthContext";
-import TimeReports from "./Tasks/TimeReports";
-import styles from "../styles/Home.module.scss";
+import { useTasks } from "../../contexts/TasksContext";
+import { useAuth } from "../../contexts/AuthContext";
+import TimeReports from "../Tasks/TimeReports";
+import TaskOverviewGraph from "./TaskOverviewGraph";
+import styles from "../../styles/Home.module.scss";
 
 function Home() {
   const { tasks, loadTasks, loading, error } = useTasks();
@@ -223,8 +224,9 @@ function Home() {
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const formattedSeconds = seconds % 60;
+    return `${hours}h ${minutes}m ${formattedSeconds}s`;
   };
 
   const formatDate = (date) => {
@@ -253,7 +255,7 @@ function Home() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>Hallo {profile?.first_name}!</h1>
+        <h1>Hello {profile?.first_name}!</h1>
         <div className={styles.headerButtons}>
           <button
             onClick={() => setShowTimeReports(!showTimeReports)}
@@ -274,6 +276,8 @@ function Home() {
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
+      
+      <TaskOverviewGraph tasks={tasks} />
       
       {showTimeReports && <TimeReports tasks={tasks} />}
 
