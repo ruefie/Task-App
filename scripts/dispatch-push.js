@@ -13,7 +13,7 @@ const {
 
 // Init Supabase and Web Push
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-webpush.setVapidDetails('mailto:you@yourdomain.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+webpush.setVapidDetails('mailto:dj_ruchie@yahoo.com.ph', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 (async () => {
   // 1) Find due & unsent notes
