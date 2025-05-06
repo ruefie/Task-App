@@ -1,5 +1,5 @@
 // src/lib/comments.js
-import { supabase } from "./supabase";
+import { supabase } from "./supabaseClient";
 
 export const commentsService = {
   async getComments(taskId) {

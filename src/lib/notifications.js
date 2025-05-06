@@ -78,25 +78,25 @@ async function initServiceWorker() {
 }
 initServiceWorker();
 
-export async function scheduleNotification(title, message, timestamp, tag) {
-  // if showTrigger is supported, let SW fire it when the OS reaches `timestamp`
-  if ('showTrigger' in Notification.prototype) {
-    const reg = await navigator.serviceWorker.ready;
-    return reg.showNotification(title, {
-      body: message,
-      tag,
-      showTrigger: new TimestampTrigger(timestamp),
-      icon: '/notification-icon.png',
-      badge: '/notification-badge.png',
-    });
-  }
+// export async function scheduleNotification(title, message, timestamp, tag) {
+//   // if showTrigger is supported, let SW fire it when the OS reaches `timestamp`
+//   if ('showTrigger' in Notification.prototype) {
+//     const reg = await navigator.serviceWorker.ready;
+//     return reg.showNotification(title, {
+//       body: message,
+//       tag,
+//       showTrigger: new TimestampTrigger(timestamp),
+//       icon: '/notification-icon.png',
+//       badge: '/notification-badge.png',
+//     });
+//   }
 
-  // fallback: fire a Notification via setTimeout (will fire even if tab is in background)
-  const delay = Math.max(0, timestamp - Date.now());
-  setTimeout(() => {
-    new Notification(title, { body: message, tag, icon: '/notification-icon.png' });
-  }, delay);
-}
+//   // fallback: fire a Notification via setTimeout (will fire even if tab is in background)
+//   const delay = Math.max(0, timestamp - Date.now());
+//   setTimeout(() => {
+//     new Notification(title, { body: message, tag, icon: '/notification-icon.png' });
+//   }, delay);
+// }
 
 
 

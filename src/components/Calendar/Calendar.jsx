@@ -17,7 +17,7 @@ import { useNotes } from "../../contexts/NotesContext";
 import NoteForm from "./NoteForm";
 import Note from "./Note";
 import styles from "../../styles/Calendar.module.scss";
-import { showNotification, scheduleNotification } from "../../lib/notifications";
+import { showNotification } from "../../lib/notifications";
 import NotificationToggle from "../NotificationToggle.jsx";
 
 function Calendar() {

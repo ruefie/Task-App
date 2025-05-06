@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon, BarChart2, Copy } from "lucide-react";
 import { useTasks } from "../../contexts/TasksContext";
 import { tasksService } from "../../lib/tasks";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabaseClient";
 import styles from "../../styles/Tasks.module.scss";
 
 import TaskForm from "./TaskForm";

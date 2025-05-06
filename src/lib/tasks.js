@@ -1,5 +1,5 @@
 // src/lib/tasks.js
-import { supabase } from './supabase';
+import { supabase } from './supabaseClient';
 
 export const tasksService = {
   async createTask(taskData) {

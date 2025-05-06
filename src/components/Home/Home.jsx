@@ -20,6 +20,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import TimeReports from "../Tasks/TimeReports";
 import TaskOverviewGraph from "./TaskOverviewGraph";
 import styles from "../../styles/Home.module.scss";
+import NotificationToggle from "../NotificationToggle";
 
 function Home() {
   const { tasks, loadTasks, loading, error } = useTasks();
@@ -255,6 +256,7 @@ function Home() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <NotificationToggle />
         <h1>Hello {profile?.first_name}!</h1>
         <div className={styles.headerButtons}>
           <button

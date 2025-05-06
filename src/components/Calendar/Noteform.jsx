@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X, Save, Bell, BellOff, Repeat, Clock } from "lucide-react";
 import styles from "../../styles/NoteForm.module.scss";
 import ReminderSettings from "./ReminderSettings.jsx";
-import { scheduleNotification } from "../../lib/notifications";
+// import { scheduleNotification } from "../../lib/notifications";
 
 function NoteForm({ note, onSave, onClose, initialData }) {
   const [formData, setFormData] = useState({
@@ -36,19 +36,19 @@ function NoteForm({ note, onSave, onClose, initialData }) {
     e.preventDefault();
     await onSave(formData);
     // then schedule a native reminder
-    if (formData.reminder_date && formData.reminder_time) {
-      const dt = new Date(
-        `${formData.reminder_date}T${formData.reminder_time}`
-      );
-      if (dt.getTime() > Date.now()) {
-        scheduleNotification(
-          `⏰ Reminder: ${formData.title}`,
-          formData.content,
-          dt.getTime(),
-           `note-${note?.id || 'new'}-${dt.getTime()}`
-        );
-      }
-    }
+    // if (formData.reminder_date && formData.reminder_time) {
+    //   const dt = new Date(
+    //     `${formData.reminder_date}T${formData.reminder_time}`
+    //   );
+    //   if (dt.getTime() > Date.now()) {
+    //     scheduleNotification(
+    //       `⏰ Reminder: ${formData.title}`,
+    //       formData.content,
+    //       dt.getTime(),
+    //        `note-${note?.id || 'new'}-${dt.getTime()}`
+    //     );
+    //   }
+    // }
 
     // showNotification(
     //   note ? 'Note updated' : 'Note added',

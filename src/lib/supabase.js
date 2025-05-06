@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase environment variables:', {
@@ -10,16 +10,6 @@ if (!supabaseUrl || !supabaseKey) {
   });
 }
 
-// Create a single supabase client for interacting with your database
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: 'supabase.auth.token',
-    storage: window.localStorage
-  }
-});
 
 // Add error handling for Supabase operations
 export const handleSupabaseError = (error) => {

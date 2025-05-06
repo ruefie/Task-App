@@ -1,5 +1,5 @@
 // src/lib/admin.js
-import { supabase } from './supabase';
+import { supabase } from './supabaseClient';
 
 export const adminService = {
   // Customer management
