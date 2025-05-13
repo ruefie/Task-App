@@ -35,27 +35,29 @@ function NoteForm({ note, onSave, onClose, initialData }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await onSave(formData);
-    // then schedule a native reminder
-    // if (formData.reminder_date && formData.reminder_time) {
-    //   const dt = new Date(
-    //     `${formData.reminder_date}T${formData.reminder_time}`
-    //   );
-    //   if (dt.getTime() > Date.now()) {
-    //     scheduleNotification(
-    //       `⏰ Reminder: ${formData.title}`,
-    //       formData.content,
-    //       dt.getTime(),
-    //        `note-${note?.id || 'new'}-${dt.getTime()}`
-    //     );
-    //   }
-    // }
-
-    // showNotification(
-    //   note ? 'Note updated' : 'Note added',
-    //   note ? 'Your changes were saved.' : 'Your note was created.'
-    // );
+  
+    // ─── Client-side fallback for in-app “instant” reminder ───
+    if (formData.reminder_date && formData.reminder_time) {
+      const dt = new Date(
+        `${formData.reminder_date}T${formData.reminder_time}`
+      );
+      const ms = dt.getTime() - Date.now();
+      if (ms > 0) {
+        setTimeout(() => {
+          new Notification(
+            `⏰ Reminder: ${formData.title}`,
+            {
+              body: formData.content || "",
+              requireInteraction: true
+            }
+          );
+        }, ms);
+      }
+    }
+  
     onClose();
   };
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;

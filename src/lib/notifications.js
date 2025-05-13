@@ -43,6 +43,8 @@ export function showNotification(title, message, options = {}) {
     (instance, toast) => instance.hide({ transitionOut: 'fadeOut' }, toast)
   ]);
 
+  
+
   // const toast = iziToast.show(toastConfig);
   // requestAnimationFrame(() => {
   //   const bell = document.querySelector(`#${toast.id} .icon-bell`);
@@ -59,24 +61,22 @@ const bells = document.querySelectorAll('.calendar-notification .icon-bell');
  });
 // iziToast.show()
 
-
-
 }
 
 // —————— 2) Service-worker / desktop scheduling ——————
 // src/lib/notifications.js
-async function initServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    try {
-      await navigator.serviceWorker.register('/sw.js');
-      console.log('SW registered');
-      // await Notification.requestPermission();
-    } catch (e) {
-      console.warn('SW registration failed', e);
-    }
-  }
-}
-initServiceWorker();
+// async function initServiceWorker() {
+//   if ('serviceWorker' in navigator) {
+//     try {
+//       await navigator.serviceWorker.register('/sw.js');
+//       console.log('SW registered');
+//       // await Notification.requestPermission();
+//     } catch (e) {
+//       console.warn('SW registration failed', e);
+//     }
+//   }
+// }
+// initServiceWorker();
 
 // export async function scheduleNotification(title, message, timestamp, tag) {
 //   // if showTrigger is supported, let SW fire it when the OS reaches `timestamp`

@@ -19,6 +19,16 @@ $hover-bg: #f3f4f6;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  select,
+  input {
+    max-width: 6rem;
+  }
 }
 
 .repeatInterval {

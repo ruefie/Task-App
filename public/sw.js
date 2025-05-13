@@ -30,7 +30,8 @@ self.addEventListener('push', event => {
       body: data.body,
       icon: '/notification-icon.png',
       badge: '/notification-icon.png',
-      tag: data.tag
+      tag: data.tag,
+      requireInteraction: true
     })
   );
 });

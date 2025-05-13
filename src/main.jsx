@@ -12,7 +12,9 @@ import { subscribeUserToPush } from './lib/push-subscribe';
 
 import { supabase } from './lib/supabaseClient';
 import './lib/notifications';
+import 'izitoast/dist/css/iziToast.min.css';
 import './index.css'; 
+
 
 // 1️⃣ Instantiate Supabase
 // const supabase = createClient(

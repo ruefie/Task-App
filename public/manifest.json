@@ -1,0 +1,43 @@
+{
+  "short_name": "TaskApp",
+  "name": "My Task Calendar",
+  "icons": [
+    {
+      "src": "/notification-badge.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/notification-icon.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display_override": [
+    "standalone",
+    "browser"
+  ],
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-wide.png",
+      "sizes": "2552x1464",
+      "type": "image/png",
+      "form_factor": "wide"          
+    },
+    {
+      "src": "/screenshots/screenshot-mobile.png",
+      "sizes": "438x940",
+      "type": "image/png"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+taskapp",
+      "url": "/?url=%s"
+    }
+  ]
+}

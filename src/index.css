@@ -1,4 +1,27 @@
 /* Reset default styles */
+/* Override iziToast’s wrapper so toasts stack vertically with space between */
+.iziToast-wrapper.iziToast-topRight,
+.iziToast-wrapper.iziToast-topLeft,
+.iziToast-wrapper.iziToast-bottomRight,
+.iziToast-wrapper.iziToast-bottomLeft {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 0.5rem;
+}
+
+.iziToast-wrapper .iziToast {
+  margin: 0 !important;
+}
+
+.calendar-notification .iziToast-buttons,
+.calendar-notification .iziToast-buttons button {
+  pointer-events: auto !important;
+  z-index: 2 !important;
+}
+
+
 * {
   margin: 0;
   padding: 0;

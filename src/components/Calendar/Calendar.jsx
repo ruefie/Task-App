@@ -882,29 +882,31 @@ function Calendar() {
               </div>
             )}
 
-      {/* Reminder Banner */}
-    {/* Replace the existing reminder banner with this new version */}
+  {/* Reminder Banner Wrapper */}
 {dueReminders.length > 0 && (
-        <div className={styles.reminderBanner}>
-          <div
-            className={styles.progressBar}
-            style={{ width: `${(snoozeCountdown/10)*100}%` }}
-          />
-          <div className={styles.content}>
-            <Bell size={16} />
-            <span>Reminder: {dueReminders[0].title}</span>
-          </div>
-          <div className={styles.actions}>
-            <button onClick={() => { handleSnoozeNote(dueReminders[0], 5); }}>
-              Snooze 5m
-            </button>
-            <button onClick={() => { dismissReminder(dueReminders[0].id); }}>
-              Dismiss
-            </button>
-          </div>
+  <div className={styles.reminderBannerWrapper}>
+    {dueReminders.map((note) => (
+      <div key={note.id} className={styles.reminderBanner}>
+        <div
+          className={styles.progressBar}
+          style={{ width: `${(snoozeCountdown/10)*100}%` }}
+        />
+        <div className={styles.content}>
+          <Bell size={16} />
+          <span>Reminder: {note.title}</span>
         </div>
-      )}
-
+        <div className={styles.actions}>
+          <button onClick={() => handleSnoozeNote(note, 5)}>
+            Snooze 5m
+          </button>
+          <button onClick={() => dismissReminder(note.id)}>
+            Dismiss
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
     </div>
   );
 }
