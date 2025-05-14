@@ -6,7 +6,6 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TasksProvider } from './contexts/TasksContext';
 import { NotesProvider } from './contexts/NotesContext';
 import { SupabaseProvider } from './contexts/SupabaseContext';
-// import { createClient } from '@supabase/supabase-js';
 import { subscribeUserToPush } from './lib/push-subscribe';
 
 
@@ -14,33 +13,6 @@ import { supabase } from './lib/supabaseClient';
 import './lib/notifications';
 import 'izitoast/dist/css/iziToast.min.css';
 import './index.css'; 
-
-
-// 1️⃣ Instantiate Supabase
-// const supabase = createClient(
-//   import.meta.env.VITE_SUPABASE_URL,
-//   import.meta.env.VITE_SUPABASE_ANON_KEY
-// );
-
-// 1️⃣ Register your service worker
-// const registration = await navigator.serviceWorker.register('/sw.js');
-
-// // 2️⃣ Register SW & subscribe to Push
-// navigator.serviceWorker
-//   .register('/sw.js')
-//   .then(reg => subscribeUserToPush(supabase, registration))
-//   .catch(console.error)
-
-
-// navigator.serviceWorker.register('/sw.js').then(async reg => {
-//   // initialize Supabase client
-//   const supabase = createClient(
-//     import.meta.env.VITE_SUPABASE_URL,
-//     import.meta.env.VITE_SUPABASE_ANON_KEY
-//   );
-//   // subscribe once per user
-//   await subscribeUserToPush(supabase);
-// }).catch(console.error);
 
 
 

@@ -139,10 +139,10 @@ function Calendar() {
          setSnoozeCountdown(10);
    
          // show in-app toast with snooze buttons
-         showNotification("Reminder", justDue[0].title, {
-           onSnooze: minutes => handleSnoozeNote(justDue[0], minutes),
-           timeout: 0,
-         });
+        //  showNotification("Reminder", justDue[0].title, {
+        //    onSnooze: minutes => handleSnoozeNote(justDue[0], minutes),
+        //    timeout: 0,
+        //  });
        }
      }, [notes]);
 
@@ -175,10 +175,10 @@ function Calendar() {
             }
             // within next minute → in-app toast
             if (diff >= 0 && diff <= 60000) {
-              showNotification("Reminder", note.title, {
-                onSnooze: minutes => handleSnoozeNote(note, minutes),
-                timeout: 0,
-              });
+              // showNotification("Reminder", note.title, {
+              //   onSnooze: minutes => handleSnoozeNote(note, minutes),
+              //   timeout: 0,
+              // });
             }
           }
         });
@@ -222,14 +222,33 @@ function Calendar() {
     const handleSnoozeNote = async (note, minutes = 5) => {
       const now = new Date();
       now.setMinutes(now.getMinutes() + minutes);
+    
+      // 1) Persist the snooze AND reset notification_sent so your server will re-dispatch
       await updateNote(note.id, {
         ...note,
         reminder_date: now.toISOString().slice(0, 10),
         reminder_time: now.toTimeString().slice(0, 5),
+        notification_sent: false,
       });
+    
+      // 2) Remove it from the current banner set
       setDueReminders(d => d.filter(n => n.id !== note.id));
+    
+      // 3) Optional: immediate client-side notification fallback
+      if (Notification.permission === "granted") {
+        const title = `⏰ Reminder: ${note.title}`;
+        const body  = note.content || "";
+        const delay = now.getTime() - Date.now();
+        setTimeout(() => {
+          navigator.serviceWorker.ready
+            .then(reg => reg.showNotification(title, { body, tag: `note-${note.id}` }));
+        }, delay);
+      }
+    
+      // 4) Show your “Snoozed” toast
       showNotification("Snoozed", `+${minutes} minutes`, { timeout: 3000 });
     };
+    
 
   // Helper functions for navigation and formatting.
   const getMonthName = (date) => {
