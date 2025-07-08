@@ -902,10 +902,13 @@ function Calendar() {
             )}
 
   {/* Reminder Banner Wrapper */}
-{dueReminders.length > 0 && (
+  {dueReminders.length > 0 && showReminderBanner && (
   <div className={styles.reminderBannerWrapper}>
     {dueReminders.map((note) => (
       <div key={note.id} className={styles.reminderBanner}>
+        <button className={styles.closeBanner} onClick={() => setShowReminderBanner(false)} aria-label="Close reminder">
+          <X size={16} />
+        </button>
         <div
           className={styles.progressBar}
           style={{ width: `${(snoozeCountdown/10)*100}%` }}

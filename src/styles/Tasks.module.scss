@@ -616,8 +616,8 @@ $warning-color: #f59e0b;
     .taskInfo {
       display: flex;
       flex-direction: column;
-      font-size: 2rem;
-      color: color.adjust($text-color, $lightness: 20%);
+      font-size: .75rem;
+      color: color.adjust($text-color, $lightness: 5%);
       flex-wrap: wrap;
       gap: 0.5rem;
     }

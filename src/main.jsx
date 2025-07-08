@@ -13,8 +13,8 @@ import { supabase } from './lib/supabaseClient';
 import './lib/notifications';
 import 'izitoast/dist/css/iziToast.min.css';
 import './index.css'; 
-
-
+//debugging only
+window.subscribeUserToPush = () => subscribeUserToPush(supabase);
 
 class ErrorBoundary extends React.Component {
   constructor(props) {

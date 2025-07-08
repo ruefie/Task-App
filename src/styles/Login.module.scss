@@ -260,3 +260,46 @@ $success-color: #10b981;
     }
   }
 }
+
+
+.passwordWrapper {
+  position: relative;
+
+  .input {
+    padding-right: 2.5rem; // leave room for the eye icon
+  }
+
+  .togglePassword {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    // use a lighter text color for the icon
+    color: color.adjust($text-color, $lightness: 30%);
+
+    &:hover {
+      // darken it back on hover
+      color: $text-color;
+    }
+  }
+}
+
+.forgotLink {
+  margin-top: 0.5rem;
+  text-align: right;
+
+  a {
+    font-size: 0.875rem;
+    color: $primary-color;
+    transition: color 0.2s;
+
+    &:hover {
+      // slightly darken for hover
+      color: color.adjust($primary-color, $lightness: -10%);
+      text-decoration: underline;
+    }
+  }
+}

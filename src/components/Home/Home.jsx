@@ -167,17 +167,22 @@ function Home() {
   };
 
   const calculateOnTimeCompletion = (tasks) => {
-    const completedTasks = tasks.filter(t => t.completed);
-    if (!completedTasks.length) return 0;
+       // Only consider tasks that are completed and have both due_date and completed_at
+        const completedTasks = tasks.filter(
+          (t) => t.completed && t.due_date && t.completed_at
+        );
+        if (completedTasks.length === 0) return 0;
     
-    const onTime = completedTasks.filter(task => {
-      const completedDate = new Date(task.completed_at);
-      const dueDate = new Date(task.due_date);
-      return completedDate <= dueDate;
-    });
-
-    return (onTime.length / completedTasks.length) * 100;
-  };
+        const onTimeCount = completedTasks.filter((task) => {
+          const completedDate = new Date(task.completed_at);
+          // Parse the due_date (which is date-only) and treat it as end-of-day
+          const dueDate = new Date(task.due_date);
+          dueDate.setHours(23, 59, 59, 999);
+          return completedDate.getTime() <= dueDate.getTime();
+        }).length;
+    
+        return (onTimeCount / completedTasks.length) * 100;
+      };
 
   const groupBy = (array, key) => {
     return array.reduce((result, item) => {

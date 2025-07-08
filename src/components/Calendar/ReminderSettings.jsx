@@ -16,6 +16,7 @@ export default function ReminderSettings({ formData, onChange }) {
           onChange={onChange}
         >
           <option value="none">Don't repeat</option>
+          <option value="minutely">Every Minute (test)</option>
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
           <option value="monthly">Monthly</option>
@@ -35,16 +36,22 @@ export default function ReminderSettings({ formData, onChange }) {
               onChange={onChange}
             />
             <span>
-              {formData.repeat_type === 'daily'   ? 'day(s)'   :
+              {
+                formData.repeat_type === 'minutely' ? 'minute(s)' :
+               formData.repeat_type === 'daily'   ? 'day(s)'   :
                formData.repeat_type === 'weekly'  ? 'week(s)'  :
                formData.repeat_type === 'monthly' ? 'month(s)' :
-                                                  'year(s)'}
+               'year(s)' }
+              {/* // formData.repeat_type === 'daily'   ? 'day(s)'   :
+              //  formData.repeat_type === 'weekly'  ? 'week(s)'  :
+              //  formData.repeat_type === 'monthly' ? 'month(s)' :
+              //                                     'year(s)'} */}
             </span>
           </div>
         )}
       </div>
 
-      <div className={styles.snoozeSection}>
+      {/* <div className={styles.snoozeSection}>
         <label htmlFor="snooze_duration">
           <Clock size={16} /> Snooze
         </label>
@@ -60,7 +67,7 @@ export default function ReminderSettings({ formData, onChange }) {
             </option>
           ))}
         </select>
-      </div>
+      </div> */}
     </div>
 );
 }

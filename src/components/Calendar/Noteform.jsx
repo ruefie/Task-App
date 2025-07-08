@@ -32,22 +32,73 @@ function NoteForm({ note, onSave, onClose, initialData }) {
   //   onSave(formData);
   // };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   await onSave(formData);
+  
+  //   // ─── Client-side fallback for in-app “instant” reminder ───
+  //   if (formData.reminder_date && formData.reminder_time) {
+  //     const dt = new Date(
+  //       `${formData.reminder_date}T${formData.reminder_time}`
+  //     );
+  //     const ms = dt.getTime() - Date.now();
+  //     if (ms > 0) {
+  //       setTimeout(() => {
+  //         new Notification(
+  //           `⏰ Reminder: ${formData.title}`,
+  //           {
+  //             body: formData.content || "",
+  //             requireInteraction: true
+  //           }
+  //         );
+  //       }, ms);
+  //     }
+  //   }
+  
+  //   onClose();
+  // };
+
+  //temporary handleSubmit 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSave(formData);
+  
+    // 1) Clone & adjust for “minutely” so it doesn’t violate your DB constraint
+    const payload = { ...formData };
+    // if (payload.repeat_type === 'minutely') {
+    //   payload.repeat_type     = 'daily';  // or 'none' if you prefer
+    //   payload.repeat_interval = 1;
+    // }
+  
+    // 2) Persist the note
+// in NoteForm.jsx before onSave:
+const [h, m] = formData.reminder_time.split(':').map(Number);
+const utcDate = new Date(
+  Date.UTC(
+    +formData.reminder_date.slice(0,4),
+    +formData.reminder_date.slice(5,7)-1,
+    +formData.reminder_date.slice(8,10),
+    h, m
+  )
+);
+payload.reminder_date = utcDate.toISOString().slice(0,10);
+payload.reminder_time = utcDate.toISOString().slice(11,19); 
+
+
+    await onSave(payload);
+    // await reloadNotes();
   
     // ─── Client-side fallback for in-app “instant” reminder ───
-    if (formData.reminder_date && formData.reminder_time) {
+    if (payload.reminder_date && payload.reminder_time) {
       const dt = new Date(
-        `${formData.reminder_date}T${formData.reminder_time}`
+        `${payload.reminder_date}T${payload.reminder_time}`
       );
       const ms = dt.getTime() - Date.now();
       if (ms > 0) {
         setTimeout(() => {
           new Notification(
-            `⏰ Reminder: ${formData.title}`,
+            `⏰ Reminder: ${payload.title}`,
             {
-              body: formData.content || "",
+              body: payload.content || "",
               requireInteraction: true
             }
           );
@@ -57,6 +108,7 @@ function NoteForm({ note, onSave, onClose, initialData }) {
   
     onClose();
   };
+  
   
 
   const handleChange = (e) => {

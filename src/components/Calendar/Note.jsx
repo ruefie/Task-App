@@ -9,12 +9,20 @@ function Note({ note, onEdit, onDelete, onSnooze }) {
     return format(new Date(`${date}T${time}`), 'MMM d, yyyy h:mm a');
   };
 
+  const UNITS = {
+    minutely: 'minute',
+    daily:    'day',
+    weekly:   'week',
+    monthly:  'month',
+    yearly:   'year',
+  };
+  
   const getRepeatText = (type, interval) => {
     if (type === 'none') return '';
-    const unit = type.slice(0); // Remove 'ly' from the end
-    return `Repeats ${interval}x ${unit}${interval > 1 ? 's' : ''}`;
+    const unit = UNITS[type] || type;
+    return `Repeats every ${interval} ${unit}${interval > 1 ? 's' : ''}`;
   };
-
+  
   return (
     <div className={styles.noteItem}>
       <div className={styles.noteHeader}>

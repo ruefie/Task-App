@@ -18,10 +18,10 @@ webpush.setVapidDetails('mailto:dj_ruchie@yahoo.com.ph', VAPID_PUBLIC_KEY, VAPID
 (async () => {
   // 1) Find due & unsent notes
   const { data: notes } = await supabase
-    .from('calendar_notes')
-    .select('id,user_id,title,content')
-    .lte('reminder_date + reminder_time', new Date().toISOString())
-    .eq('notification_sent', false);
+  .from('calendar_notes')
+  .select('id,user_id,title,content,repeat_type,repeat_interval')
+  .lte('reminder_date + reminder_time', new Date().toISOString())
+  .eq('notification_sent', false);
 
   for (const note of notes) {
     // 2) Fetch subscriptions
@@ -43,9 +43,46 @@ webpush.setVapidDetails('mailto:dj_ruchie@yahoo.com.ph', VAPID_PUBLIC_KEY, VAPID
     }
 
     // 4) Mark sent
+        // 4) Reschedule (or mark done) in one go  (temporary)
+    //    (make sure you selected repeat_type & repeat_interval above)
+    let updates = {};
+    if (note.repeat_type && note.repeat_type !== 'none') {
+      const now = new Date();
+      let nextDt;
+      switch (note.repeat_type) {
+        case 'minutely':
+          nextDt = new Date(now.getTime() + (note.repeat_interval || 1) * 60_000);
+          break;
+        case 'daily':
+          nextDt = new Date(now);
+          nextDt.setDate(nextDt.getDate() + (note.repeat_interval || 1));
+          break;
+        case 'weekly':
+          nextDt = new Date(now);
+          nextDt.setDate(nextDt.getDate() + (note.repeat_interval || 1) * 7);
+          break;
+        case 'monthly':
+          nextDt = new Date(now);
+          nextDt.setMonth(nextDt.getMonth() + (note.repeat_interval || 1));
+          break;
+        case 'yearly':
+          nextDt = new Date(now);
+          nextDt.setFullYear(nextDt.getFullYear() + (note.repeat_interval || 1));
+          break;
+      }
+      updates = {
+        reminder_date: nextDt.toISOString().slice(0,10),
+        reminder_time: nextDt.toTimeString().slice(0,5),
+        notification_sent: false
+      };
+    } else {
+      updates = { notification_sent: true };
+    }
+
     await supabase
       .from('calendar_notes')
-      .update({ notification_sent: true })
+      .update(updates)
       .eq('id', note.id);
+
   }
 })().catch(console.error);
