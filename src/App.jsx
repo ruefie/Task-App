@@ -11,12 +11,14 @@ import { NotesProvider } from "./contexts/NotesContext";
 import PrivateRoute from "./components/PrivateRoute";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 import PageNotFound from "./components/ui/PageNotFound";
+import ResetPassword from "./pages/ResetPassword.jsx"; 
 
 
 const Login = lazy(() => import("./pages/Login.jsx"));
 const Register = lazy(() => import("./pages/Register.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
+// const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 
 const App = () => (
   <Router>
@@ -36,8 +38,10 @@ const App = () => (
                 }
               />
               <Route path="/" element={<Navigate to="/dashboard/home" replace />} />
-              <Route path="*" element={<PageNotFound />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="*" element={<PageNotFound />} />
+
             </Routes>
           </Suspense>
         </NotesProvider>
