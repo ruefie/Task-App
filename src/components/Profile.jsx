@@ -24,6 +24,28 @@ function Profile() {
     }
   }, [profile]);
 
+  // Fetch fresh user & profile data (e.g. after password reset) on mount
+  useEffect(() => {
+    (async () => {
+      const { data: { user: currentUser }, error: userErr } = await supabase.auth.getUser();
+      if (userErr) {
+        console.error('Error fetching Supabase user:', userErr);
+        return;
+      }
+      const { data: freshProfile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', currentUser.id)
+        .single();
+      if (profileErr) {
+        console.error('Error fetching profile row:', profileErr);
+        return;
+      }
+      setFirstName(freshProfile.first_name || '');
+      setLastName(freshProfile.last_name || '');
+    })();
+  }, []);
+
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setError('');

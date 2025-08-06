@@ -25,18 +25,28 @@ import styles from '../styles/ResetPassword.module.scss'
   //   } else {
   //     setMessage({ type: 'error', text: 'Invalid recovery link.' })
   //   }
-  // }, [search, hash])
+  // }, [])
 
   useEffect(() => {
-    ;(async () => {
-      const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
-      if (error) {
-        setMessage({ type: 'error', text: error.message })
-      }
-      // if no error, the session is now in memory and you can call updateUser…
-    })()
+    // supabase.auth
+    //   .getSessionFromUrl({ storeSession: true })
+    //   .then(({ error }) => {
+    //     if (error) {
+    //       setMessage({ type: 'error', text: error.message })
+    //     }
+    //   })
+(async () => {
+    // v2 will auto-parse the URL with detectSessionInUrl
+    const { data: { session }, error } = await supabase.auth.getSession()
+    if (error) {
+     setMessage({ type: 'error', text: error.message })
+    } else if (!session) {
+      setMessage({ type: 'error', text: 'Invalid recovery link.' })
+    }
+    // now you can call supabase.auth.updateUser(…)
+  })()
   }, [])
-
+  
   // STEP B: submit new password
   const handleSubmit = async e => {
     e.preventDefault()
