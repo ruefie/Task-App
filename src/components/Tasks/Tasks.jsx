@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon, BarChart2, Copy } from "lucide-react";
+// src/components/tasks/Tasks.jsx
+import React, { useState, useEffect, useMemo } from "react";
+import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon, BarChart2 } from "lucide-react";
 import { useTasks } from "../../contexts/TasksContext";
 import { tasksService } from "../../lib/tasks";
 import { supabase } from "../../lib/supabaseClient";
@@ -10,9 +11,11 @@ import TaskList from "./TaskList";
 import KanbanBoard from "./KanbanBoard";
 import TaskDetails from "./TaskDetails";
 import TaskAnalytics from "./TaskAnalytics";
+import TasksToolbar from "./TasksToolbar";
 
 function Tasks({ onTaskAdded, initialTaskData }) {
   const { tasks, setTasks, loadTasks, error, loading } = useTasks();
+
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -24,6 +27,10 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   const [copyFromTask, setCopyFromTask] = useState(null);
   const [previousMilestones, setPreviousMilestones] = useState({});
 
+  // NEW: search + filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
@@ -31,23 +38,25 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   useEffect(() => {
     // Store initial milestones for all tasks
     const milestones = {};
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       if (!previousMilestones[task.id]) {
         milestones[task.id] = task.milestone;
       }
     });
-    setPreviousMilestones(prev => ({ ...prev, ...milestones }));
+    setPreviousMilestones((prev) => ({ ...prev, ...milestones }));
   }, [tasks]);
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleTaskClick = (task, e) => {
-    if (e.target.closest("button")) return;
+    if (e?.target?.closest?.("button")) return;
     setSelectedTask(task);
   };
 
@@ -62,36 +71,48 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       client: task.client,
       project: task.project,
       description: task.description,
-      completed: false
+      completed: false,
     };
-    
+
     setCopyFromTask(taskCopy);
     setShowForm(true);
   };
 
   const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
-    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
+    if (
+      !destination ||
+      (destination.droppableId === source.droppableId &&
+        destination.index === source.index)
+    ) {
       return;
     }
     const task = tasks.find((t) => t.id === draggableId);
     if (!task) return;
+
     const newTasks = [...tasks];
-    const [movedTask] = newTasks.splice(newTasks.findIndex((t) => t.id === draggableId), 1);
+    const [movedTask] = newTasks.splice(
+      newTasks.findIndex((t) => t.id === draggableId),
+      1
+    );
     const newMilestone = destination.droppableId;
 
-    // Store the previous milestone before updating
+    // Store previous milestone before updating if moving to Done
     if (newMilestone === "Done") {
-      setPreviousMilestones(prev => ({
+      setPreviousMilestones((prev) => ({
         ...prev,
-        [draggableId]: movedTask.milestone
+        [draggableId]: movedTask.milestone,
       }));
     }
 
     movedTask.milestone = newMilestone;
     movedTask.completed = newMilestone === "Done";
 
-    newTasks.splice(newTasks.findIndex((t) => t.milestone === newMilestone) + destination.index, 0, movedTask);
+    newTasks.splice(
+      newTasks.findIndex((t) => t.milestone === newMilestone) + destination.index,
+      0,
+      movedTask
+    );
     setTasks(newTasks);
     try {
       await tasksService.updateTask(draggableId, {
@@ -111,21 +132,19 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       const newCompleted = !task.completed;
       const updatedData = {
         completed: newCompleted,
-        milestone: newCompleted ? "Done" : (previousMilestones[id] || task.milestone)
+        milestone: newCompleted ? "Done" : previousMilestones[id] || task.milestone,
       };
 
-      // Store the current milestone before moving to Done
+      // Store current milestone before moving to Done
       if (newCompleted) {
-        setPreviousMilestones(prev => ({
+        setPreviousMilestones((prev) => ({
           ...prev,
-          [id]: task.milestone
+          [id]: task.milestone,
         }));
       }
 
       await tasksService.updateTask(id, updatedData);
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updatedData } : t))
-      );
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updatedData } : t)));
     } catch (error) {
       console.error("Error updating task:", error);
     }
@@ -137,16 +156,16 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       if (timers[id]) {
         clearInterval(timers[id]);
         setTimers((prev) => {
-          const newTimers = { ...prev };
-          delete newTimers[id];
-          return newTimers;
+          const n = { ...prev };
+          delete n[id];
+          return n;
         });
       }
       setTasks((prev) => prev.filter((task) => task.id !== id));
-      setPreviousMilestones(prev => {
-        const newMilestones = { ...prev };
-        delete newMilestones[id];
-        return newMilestones;
+      setPreviousMilestones((prev) => {
+        const n = { ...prev };
+        delete n[id];
+        return n;
       });
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -161,16 +180,18 @@ function Tasks({ onTaskAdded, initialTaskData }) {
         const timerEntry = await tasksService.startTimer(taskId);
         const timer = setInterval(() => {
           setTasks((prev) =>
-            prev.map((t) =>
-              t.id === taskId ? { ...t, timeSpent: t.timeSpent + 1 } : t
-            )
+            prev.map((t) => (t.id === taskId ? { ...t, timeSpent: t.timeSpent + 1 } : t))
           );
         }, 1000);
         setTimers((prev) => ({ ...prev, [taskId]: timer }));
         setTasks((prev) =>
           prev.map((t) =>
             t.id === taskId
-              ? { ...t, isTimerRunning: true, timerEntries: [...t.timerEntries, timerEntry] }
+              ? {
+                  ...t,
+                  isTimerRunning: true,
+                  timerEntries: [...t.timerEntries, timerEntry],
+                }
               : t
           )
         );
@@ -181,7 +202,9 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       try {
         const activeEntry = task.timerEntries.find((entry) => !entry.end_time);
         if (activeEntry) {
-          const duration = Math.floor((new Date() - new Date(activeEntry.start_time)) / 1000);
+          const duration = Math.floor(
+            (new Date() - new Date(activeEntry.start_time)) / 1000
+          );
           const stoppedEntry = await tasksService.stopTimer(activeEntry.id, duration);
           setTasks((prev) =>
             prev.map((t) =>
@@ -191,7 +214,11 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                     isTimerRunning: false,
                     timerEntries: t.timerEntries.map((entry) =>
                       entry.id === activeEntry.id
-                        ? { ...entry, end_time: stoppedEntry.end_time, duration: stoppedEntry.duration }
+                        ? {
+                            ...entry,
+                            end_time: stoppedEntry.end_time,
+                            duration: stoppedEntry.duration,
+                          }
                         : entry
                     ),
                   }
@@ -201,9 +228,9 @@ function Tasks({ onTaskAdded, initialTaskData }) {
         }
         clearInterval(timers[taskId]);
         setTimers((prev) => {
-          const newTimers = { ...prev };
-          delete newTimers[taskId];
-          return newTimers;
+          const n = { ...prev };
+          delete n[taskId];
+          return n;
         });
       } catch (error) {
         console.error("Error stopping timer:", error);
@@ -229,9 +256,9 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       if (timers[taskId]) {
         clearInterval(timers[taskId]);
         setTimers((prev) => {
-          const newTimers = { ...prev };
-          delete newTimers[taskId];
-          return newTimers;
+          const n = { ...prev };
+          delete n[taskId];
+          return n;
         });
       }
       if (taskToReset.timerEntries && taskToReset.timerEntries.length > 0) {
@@ -253,6 +280,44 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     }
   };
 
+  // ---- Filtering logic -------------------------------------------------------
+  const statusToMilestone = {
+    todo: "Todo",
+    on_going: "On Going",
+    in_review: "In Review",
+    done: "Done",
+  };
+
+  const filteredTasks = useMemo(() => {
+    const q = (searchTerm || "").trim().toLowerCase();
+    const milestoneFilter = statusFilter ? statusToMilestone[statusFilter] : "";
+
+    return tasks.filter((t) => {
+      // status filter (by milestone)
+      if (milestoneFilter && (t.milestone || "") !== milestoneFilter) return false;
+
+      if (!q) return true;
+
+      // Search across common fields (adjust if your schema differs)
+      const fields = [
+        t.name,
+        t.description,
+        t.assignee,
+        t.client,
+        t.project,
+        t.priority,
+        t.milestone,
+      ]
+        .filter(Boolean)
+        .map((v) => String(v).toLowerCase());
+
+      return fields.some((f) => f.includes(q));
+    });
+  }, [tasks, searchTerm, statusFilter]);
+
+  const resultCount = filteredTasks.length;
+
+  // ---- Render ----------------------------------------------------------------
   const renderContent = () => {
     if (loading) {
       return <p className={styles.loading}>Loading your tasks...</p>;
@@ -275,6 +340,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           </button>
         </div>
 
+        {/* Add Task button */}
         {!showForm && (
           <button onClick={() => setShowForm(true)} className={styles.addButton}>
             <Plus size={20} />
@@ -282,6 +348,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           </button>
         )}
 
+        {/* Form */}
         {showForm && (
           <TaskForm
             onClose={() => {
@@ -296,9 +363,10 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           />
         )}
 
+        {/* Views consume filteredTasks */}
         {viewMode === "kanban" ? (
           <KanbanBoard
-            tasks={tasks}
+            tasks={filteredTasks}
             onDragEnd={handleDragEnd}
             onTaskClick={handleTaskClick}
             onToggleTask={toggleTask}
@@ -314,7 +382,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           />
         ) : (
           <TaskList
-            tasks={tasks}
+            tasks={filteredTasks}
             onTaskClick={handleTaskClick}
             onToggleTask={toggleTask}
             onDeleteTask={deleteTask}
@@ -341,42 +409,62 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           className={styles.analyticsToggle}
         >
           <BarChart2 size={20} />
-          {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+          {showAnalytics ? "Hide Analytics" : "Show Analytics"}
         </button>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
-      
-      {showAnalytics && <TaskAnalytics tasks={tasks} />}
 
+      {showAnalytics && <TaskAnalytics tasks={filteredTasks} />}
+
+      {/* Summary row with total time and refresh */}
       <div className={styles.summary}>
         <div className={styles.totalTime}>
           <Clock size={20} />
           <span>
-            Total Time: {formatTime(tasks.reduce((total, task) => total + task.timeSpent, 0))}
+            Total Time:{" "}
+            {formatTime(
+              filteredTasks.reduce((total, task) => total + (task.timeSpent || 0), 0)
+            )}
           </span>
         </div>
-        <button 
-          onClick={loadTasks} 
-          className={styles.refreshButton}
-          disabled={loading}
-        >
-          <RefreshCw size={16} className={loading ? styles.spinning : ''} />
-          {loading ? 'Refreshing...' : 'Refresh'}
+        <button onClick={loadTasks} className={styles.refreshButton} disabled={loading}>
+          <RefreshCw size={16} className={loading ? styles.spinning : ""} />
+          {loading ? "Refreshing..." : "Refresh"}
         </button>
+      </div>
+
+      {/* NEW: Toolbar + result hint */}
+      <TasksToolbar
+        searchTerm={searchTerm}
+        onSearch={setSearchTerm}
+        statusFilter={statusFilter}
+        onFilter={setStatusFilter}
+      />
+      <div className={styles.hintRow}>
+        {searchTerm || statusFilter
+          ? `Showing ${resultCount} matching ${resultCount === 1 ? "task" : "tasks"}`
+          : `Showing all ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
       </div>
 
       {renderContent()}
 
       {showConfirmation && (
-        <div className={styles.confirmationOverlay} onClick={() => setShowConfirmation(false)}>
+        <div
+          className={styles.confirmationOverlay}
+          onClick={() => setShowConfirmation(false)}
+        >
           <div className={styles.confirmationDialog} onClick={(e) => e.stopPropagation()}>
             <h3>Reset Timer</h3>
             <p>
-              Are you sure you want to reset the timer for this task? This will permanently delete all timer entries and cannot be undone.
+              Are you sure you want to reset the timer for this task? This will permanently
+              delete all timer entries and cannot be undone.
             </p>
             <div className={styles.confirmationButtons}>
-              <button onClick={() => setShowConfirmation(false)} className={styles.cancelButton}>
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className={styles.cancelButton}
+              >
                 Cancel
               </button>
               <button onClick={confirmResetTimer} className={styles.confirmButton}>
