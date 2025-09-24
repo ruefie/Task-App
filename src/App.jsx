@@ -1,53 +1,47 @@
+// src/App.jsx
 import React, { Suspense, lazy } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { TasksProvider } from "./contexts/TasksContext";
-import { NotesProvider } from "./contexts/NotesContext";
+import { Routes, Route, Navigate } from "react-router-dom";
+
 import PrivateRoute from "./components/PrivateRoute";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 import PageNotFound from "./components/ui/PageNotFound";
-import ResetPassword from "./pages/ResetPassword.jsx"; 
 
 
-const Login = lazy(() => import("./pages/Login.jsx"));
-const Register = lazy(() => import("./pages/Register.jsx"));
-const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
+const Login          = lazy(() => import("./pages/Login.jsx"));
+const Register       = lazy(() => import("./pages/Register.jsx"));
+const Dashboard      = lazy(() => import("./pages/Dashboard.jsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
-// const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
+const ResetPassword  = lazy(() => import("./pages/ResetPassword.jsx"));
 
-const App = () => (
-  <Router>
-    <AuthProvider>
-      <TasksProvider>
-        <NotesProvider>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route
-                path="/dashboard/*"
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route path="/" element={<Navigate to="/dashboard/home" replace />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="*" element={<PageNotFound />} />
+export default function App() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        {/* Public */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-            </Routes>
-          </Suspense>
-        </NotesProvider>
-      </TasksProvider>
-    </AuthProvider>
-  </Router>
-);
+        {/* Private */}
+        <Route
+          path="/dashboard/*"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
 
-export default App;
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/dashboard/home" replace />} />
+
+        {/* 404 */}
+        <Route path="*" element={<PageNotFound />} />
+     
+        
+
+      </Routes>
+    </Suspense>
+  );
+}

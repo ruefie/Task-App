@@ -1,0 +1,127 @@
+@use "sass:color";
+
+$text: #374151;
+$muted: color.adjust($text, $lightness: 10%);
+$danger: #c53030;
+$danger-bg: #fff5f5;
+$border: #e5e7eb;
+$primary: #2563eb;
+$bg: #ffffff;
+
+.wrapper {
+  margin: 20px;
+  padding: 16px;
+  border: 1px solid $border;
+  border-left: 4px solid $danger;
+  border-radius: 8px;
+  background: $bg;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.icon {
+  font-size: 22px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: $danger;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: $muted;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.btn {
+  appearance: none;
+  border-radius: 8px;
+  border: 1px solid $border;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+  background: $bg;
+  transition: background .15s ease, box-shadow .15s ease, transform .02s ease-in-out;
+
+  &:hover { background: #f9fafb; }
+  &:active { transform: translateY(1px); }
+  &:focus {
+    outline: 2px solid color.adjust($primary, $lightness: 20%);
+    outline-offset: 1px;
+  }
+}
+
+.btnPrimary {
+  background: $primary;
+  color: #fff;
+  border-color: $primary;
+
+  &:hover { background: color.adjust($primary, $lightness: -3%); }
+}
+
+.btnGhost {
+  background: $bg;
+  color: $text;
+}
+
+.details {
+  margin-top: 8px;
+  border-top: 1px solid $border;
+  padding-top: 8px;
+}
+
+.summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: $text;
+
+  &:hover { text-decoration: underline; }
+}
+
+.detailBlock {
+  margin-top: 10px;
+}
+
+.detailLabel {
+  font-size: 12px;
+  color: $muted;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.pre {
+  margin: 0;
+  padding: 10px;
+  background: #f7fafc;
+  border: 1px solid $border;
+  border-radius: 6px;
+  overflow: auto;
+  max-height: 280px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Subtle context background when things break badly (optional) */
+.wrapper[role="alert"] {
+  background-image: linear-gradient(0deg, rgba(197,48,48,0.04), rgba(197,48,48,0.04));
+}

@@ -11,7 +11,7 @@ function TaskForm({ onClose, editingTask, setTasks, onTaskAdded, initialData, co
   const fileInputRef = useRef(null);
   const [taskData, setTaskData] = useState({
     name: "",
-    milestone: "Todo",
+    milestone: "To Do",
     priority: "Normal",
     start_date: "",
     due_date: "",
@@ -196,7 +196,7 @@ function TaskForm({ onClose, editingTask, setTasks, onTaskAdded, initialData, co
               value={taskData.milestone}
               onChange={handleInputChange}
             >
-              <option value="Todo">Todo</option>
+              <option value="To Do">To Do</option>
               <option value="On Going">On Going</option>
               <option value="In Review">In Review</option>
               <option value="Done">Done</option>

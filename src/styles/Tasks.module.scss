@@ -27,6 +27,11 @@ $warning-color: #f59e0b;
   h1 {
     margin: 0;
   }
+
+  .headerActions{
+    display: flex;
+    gap: 1rem;
+  }
 }
 .headerButtons{
   display: flex;
@@ -137,6 +142,12 @@ $warning-color: #f59e0b;
   }
 }
 
+.hintRow {
+  font-size: 0.875rem;
+  color: color.adjust($text-color, $lightness: 20%);
+  margin-bottom: 1rem;
+}
+
 .addButton {
   display: flex;
   align-items: center;
@@ -147,6 +158,7 @@ $warning-color: #f59e0b;
   border: none;
   border-radius: 0.375rem;
   font-weight: 500;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 1.5rem;
@@ -843,7 +855,7 @@ $warning-color: #f59e0b;
 .viewTabs {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin: 2rem 0 1rem 0;
 }
 
 .viewTabButton {

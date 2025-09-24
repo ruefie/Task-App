@@ -1,6 +1,9 @@
 // src/components/tasks/Tasks.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon, BarChart2 } from "lucide-react";
+// If your lucide build complains, use:
+// import { Plus, RefreshCw, Clock, KanbanSquare as KanbanIcon, AlignLeft as AlignLeftIcon, BarChart2 } from "lucide-react";
+
 import { useTasks } from "../../contexts/TasksContext";
 import { tasksService } from "../../lib/tasks";
 import { supabase } from "../../lib/supabaseClient";
@@ -13,7 +16,7 @@ import TaskDetails from "./TaskDetails";
 import TaskAnalytics from "./TaskAnalytics";
 import TasksToolbar from "./TasksToolbar";
 
-function Tasks({ onTaskAdded, initialTaskData }) {
+function Tasks({ onTaskAdded, initialTaskData , onExportCsv}) {
   const { tasks, setTasks, loadTasks, error, loading } = useTasks();
 
   const [showForm, setShowForm] = useState(false);
@@ -27,9 +30,12 @@ function Tasks({ onTaskAdded, initialTaskData }) {
   const [copyFromTask, setCopyFromTask] = useState(null);
   const [previousMilestones, setPreviousMilestones] = useState({});
 
-  // NEW: search + filter state
+  // Search / Filter / Sort state
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
+  const [dueFilter, setDueFilter] = useState(""); // "", "overdue", "today", "week"
+  const [sortBy, setSortBy] = useState("");       // "", "due_asc", "due_desc", "priority_high", "name_asc", "name_desc"
 
   useEffect(() => {
     loadTasks();
@@ -73,36 +79,24 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       description: task.description,
       completed: false,
     };
-
     setCopyFromTask(taskCopy);
     setShowForm(true);
   };
 
   const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
-    if (
-      !destination ||
-      (destination.droppableId === source.droppableId &&
-        destination.index === source.index)
-    ) {
+    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
       return;
     }
     const task = tasks.find((t) => t.id === draggableId);
     if (!task) return;
 
     const newTasks = [...tasks];
-    const [movedTask] = newTasks.splice(
-      newTasks.findIndex((t) => t.id === draggableId),
-      1
-    );
+    const [movedTask] = newTasks.splice(newTasks.findIndex((t) => t.id === draggableId), 1);
     const newMilestone = destination.droppableId;
 
-    // Store previous milestone before updating if moving to Done
     if (newMilestone === "Done") {
-      setPreviousMilestones((prev) => ({
-        ...prev,
-        [draggableId]: movedTask.milestone,
-      }));
+      setPreviousMilestones((prev) => ({ ...prev, [draggableId]: movedTask.milestone }));
     }
 
     movedTask.milestone = newMilestone;
@@ -135,12 +129,8 @@ function Tasks({ onTaskAdded, initialTaskData }) {
         milestone: newCompleted ? "Done" : previousMilestones[id] || task.milestone,
       };
 
-      // Store current milestone before moving to Done
       if (newCompleted) {
-        setPreviousMilestones((prev) => ({
-          ...prev,
-          [id]: task.milestone,
-        }));
+        setPreviousMilestones((prev) => ({ ...prev, [id]: task.milestone }));
       }
 
       await tasksService.updateTask(id, updatedData);
@@ -187,11 +177,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
         setTasks((prev) =>
           prev.map((t) =>
             t.id === taskId
-              ? {
-                  ...t,
-                  isTimerRunning: true,
-                  timerEntries: [...t.timerEntries, timerEntry],
-                }
+              ? { ...t, isTimerRunning: true, timerEntries: [...t.timerEntries, timerEntry] }
               : t
           )
         );
@@ -202,9 +188,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
       try {
         const activeEntry = task.timerEntries.find((entry) => !entry.end_time);
         if (activeEntry) {
-          const duration = Math.floor(
-            (new Date() - new Date(activeEntry.start_time)) / 1000
-          );
+          const duration = Math.floor((new Date() - new Date(activeEntry.start_time)) / 1000);
           const stoppedEntry = await tasksService.stopTimer(activeEntry.id, duration);
           setTasks((prev) =>
             prev.map((t) =>
@@ -214,11 +198,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
                     isTimerRunning: false,
                     timerEntries: t.timerEntries.map((entry) =>
                       entry.id === activeEntry.id
-                        ? {
-                            ...entry,
-                            end_time: stoppedEntry.end_time,
-                            duration: stoppedEntry.duration,
-                          }
+                        ? { ...entry, end_time: stoppedEntry.end_time, duration: stoppedEntry.duration }
                         : entry
                     ),
                   }
@@ -280,48 +260,148 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     }
   };
 
-  // ---- Filtering logic -------------------------------------------------------
-  const statusToMilestone = {
-    todo: "Todo",
-    on_going: "On Going",
-    in_review: "In Review",
-    done: "Done",
+  // ---- Filtering / Sorting ---------------------------------------------------
+  const statusToMilestone = { todo: "To Do", on_going: "On Going", in_review: "In Review", done: "Done" };
+  const priorityOrder = { Urgent: 3, High: 2, Normal: 1 };
+
+  const isToday = (d) => {
+    if (!d) return false; 
+    const x = new Date(d), now = new Date();
+    return x.getFullYear() === now.getFullYear() &&
+           x.getMonth() === now.getMonth() &&
+           x.getDate() === now.getDate();
   };
+
+  const isThisWeek = (d) => {
+    if (!d) return false;
+    const x = new Date(d);
+    const now = new Date();
+    // Monday-based week start (common in DE). Change if you prefer Sunday.
+    const dayOnly = (dt) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    const start = dayOnly(now);
+    const weekday = (start.getDay() + 6) % 7; // Mon=0..Sun=6
+    start.setDate(start.getDate() - weekday);
+    const end = dayOnly(start);
+    end.setDate(start.getDate() + 7);
+    return x >= start && x < end;
+  };
+
+  const isOverdue = (d) => d && new Date(d) < new Date() && !isToday(d);
 
   const filteredTasks = useMemo(() => {
     const q = (searchTerm || "").trim().toLowerCase();
     const milestoneFilter = statusFilter ? statusToMilestone[statusFilter] : "";
 
     return tasks.filter((t) => {
-      // status filter (by milestone)
       if (milestoneFilter && (t.milestone || "") !== milestoneFilter) return false;
+      if (priorityFilter && (t.priority || "") !== priorityFilter) return false;
+
+      if (dueFilter) {
+        const d = t.due_date;
+        if (dueFilter === "overdue" && !isOverdue(d)) return false;
+        if (dueFilter === "today" && !isToday(d)) return false;
+        if (dueFilter === "week" && !isThisWeek(d)) return false;
+      }
 
       if (!q) return true;
 
-      // Search across common fields (adjust if your schema differs)
-      const fields = [
-        t.name,
-        t.description,
-        t.assignee,
-        t.client,
-        t.project,
-        t.priority,
-        t.milestone,
-      ]
+      const fields = [t.name, t.description, t.assignee, t.client, t.project, t.priority, t.milestone]
         .filter(Boolean)
         .map((v) => String(v).toLowerCase());
 
       return fields.some((f) => f.includes(q));
     });
-  }, [tasks, searchTerm, statusFilter]);
+  }, [tasks, searchTerm, statusFilter, priorityFilter, dueFilter]);
 
-  const resultCount = filteredTasks.length;
+  const sortedTasks = useMemo(() => {
+    const arr = [...filteredTasks];
+    const byDue = (a, b) => {
+      const da = a.due_date ? new Date(a.due_date).getTime() : Number.POSITIVE_INFINITY;
+      const db = b.due_date ? new Date(b.due_date).getTime() : Number.POSITIVE_INFINITY;
+      return da - db;
+    };
+    const byName = (a, b) =>
+      String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
+    const byPriority = (a, b) => (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
 
-  // ---- Render ----------------------------------------------------------------
-  const renderContent = () => {
-    if (loading) {
-      return <p className={styles.loading}>Loading your tasks...</p>;
+    switch (sortBy) {
+      case "due_asc": arr.sort(byDue); break;
+      case "due_desc": arr.sort((a, b) => byDue(b, a)); break;
+      case "priority_high": arr.sort(byPriority); break;
+      case "name_asc": arr.sort(byName); break;
+      case "name_desc": arr.sort((a, b) => byName(b, a)); break;
+      default: break;
     }
+    return arr;
+  }, [filteredTasks, sortBy]);
+
+  // ✅ MISSING BEFORE: define counters used in the hint row
+  const counters = useMemo(() => {
+    return sortedTasks.reduce(
+      (acc, t) => {
+        const m = t.milestone || "";
+        if (m === "To Do") acc.todo++;
+        else if (m === "On Going") acc.on_going++;
+        else if (m === "In Review") acc.in_review++;
+        else if (m === "Done") acc.done++;
+        return acc;
+      },
+      { todo: 0, on_going: 0, in_review: 0, done: 0 }
+    );
+  }, [sortedTasks]);
+
+  // CSV export of the current (sorted/filtered) view
+  const exportCsv = () => {
+    const rows = sortedTasks.map((t) => ({
+      id: t.id,
+      name: t.name,
+      milestone: t.milestone,
+      priority: t.priority,
+      assignee: t.assignee,
+      client: t.client,
+      project: t.project,
+      start_date: t.start_date,
+      due_date: t.due_date,
+      completed: t.completed ? "Yes" : "No",
+      time_spent_seconds: t.timeSpent ?? 0,
+    }));
+
+    const header = Object.keys(
+      rows[0] || {
+        id: "", name: "", milestone: "", priority: "", assignee: "",
+        client: "", project: "", start_date: "", due_date: "", completed: "", time_spent_seconds: ""
+      }
+    );
+
+    const csv = [
+      header.join(","),
+      ...rows.map((r) =>
+        header
+          .map((k) => {
+            const val = r[k] ?? "";
+            const s = String(val).replaceAll('"', '""');
+            return /[",\n]/.test(s) ? `"${s}"` : s;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tasks_export.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const resultCount = sortedTasks.length;
+
+  // -------- Render ------------------------------------------------------------
+  const renderContent = () => {
+    if (loading) return <p className={styles.loading}>Loading your tasks...</p>;
 
     return (
       <>
@@ -340,14 +420,46 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           </button>
         </div>
 
+        {/* NEW: Toolbar + result hint */}
+        <TasksToolbar
+          searchTerm={searchTerm}
+          onSearch={setSearchTerm}
+          statusFilter={statusFilter}
+          onFilter={setStatusFilter}
+          priorityFilter={priorityFilter}
+          onPriorityFilter={setPriorityFilter}
+          dueFilter={dueFilter}
+          onDueFilter={setDueFilter}
+          sortBy={sortBy}
+          onSortBy={setSortBy}
+          onClearFilters={() => {
+            setSearchTerm("");
+            setStatusFilter("");
+            setPriorityFilter("");
+            setDueFilter("");
+            setSortBy("");
+          }}
+          onExportCsv={exportCsv}
+        />
+
+        <div className={styles.hintRow}>
+          {searchTerm || statusFilter || priorityFilter || dueFilter || sortBy
+            ? `Showing ${resultCount} matching ${resultCount === 1 ? "task" : "tasks"} `
+            : `Showing all ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
+          <span className={styles.counters}>
+            : To Do: {counters.todo} • On Going: {counters.on_going} • In Review:{counters.in_review}  • Done: {counters.done}
+          </span>
+        </div>
+
         {/* Add Task button */}
         {!showForm && (
           <button onClick={() => setShowForm(true)} className={styles.addButton}>
             <Plus size={20} />
             Add Task
           </button>
+          
         )}
-
+ <button className={styles.primaryBtn} onClick={onExportCsv}>Export CSV</button>
         {/* Form */}
         {showForm && (
           <TaskForm
@@ -363,10 +475,10 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           />
         )}
 
-        {/* Views consume filteredTasks */}
+        {/* Views consume sortedTasks */}
         {viewMode === "kanban" ? (
           <KanbanBoard
-            tasks={filteredTasks}
+            tasks={sortedTasks}
             onDragEnd={handleDragEnd}
             onTaskClick={handleTaskClick}
             onToggleTask={toggleTask}
@@ -382,7 +494,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
           />
         ) : (
           <TaskList
-            tasks={filteredTasks}
+            tasks={sortedTasks}
             onTaskClick={handleTaskClick}
             onToggleTask={toggleTask}
             onDeleteTask={deleteTask}
@@ -404,56 +516,39 @@ function Tasks({ onTaskAdded, initialTaskData }) {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Tasks</h1>
-        <button
-          onClick={() => setShowAnalytics(!showAnalytics)}
-          className={styles.analyticsToggle}
-        >
-          <BarChart2 size={20} />
-          {showAnalytics ? "Hide Analytics" : "Show Analytics"}
-        </button>
+        <div className={styles.headerActions}>
+          <button
+            onClick={() => setShowAnalytics(!showAnalytics)}
+            className={styles.analyticsToggle}
+          >
+            <BarChart2 size={20} />
+            {showAnalytics ? "Hide Analytics" : "Show Analytics"}
+          </button>
+          <button onClick={loadTasks} className={styles.refreshButton} disabled={loading}>
+            <RefreshCw size={16} className={loading ? styles.spinning : ""} />
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
 
-      {showAnalytics && <TaskAnalytics tasks={filteredTasks} />}
+      {showAnalytics && <TaskAnalytics tasks={sortedTasks} />}
 
-      {/* Summary row with total time and refresh */}
+      {/* Summary row */}
       <div className={styles.summary}>
         <div className={styles.totalTime}>
           <Clock size={20} />
           <span>
-            Total Time:{" "}
-            {formatTime(
-              filteredTasks.reduce((total, task) => total + (task.timeSpent || 0), 0)
-            )}
+            Total Time: {formatTime(sortedTasks.reduce((total, task) => total + (task.timeSpent || 0), 0))}
           </span>
         </div>
-        <button onClick={loadTasks} className={styles.refreshButton} disabled={loading}>
-          <RefreshCw size={16} className={loading ? styles.spinning : ""} />
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
-      </div>
-
-      {/* NEW: Toolbar + result hint */}
-      <TasksToolbar
-        searchTerm={searchTerm}
-        onSearch={setSearchTerm}
-        statusFilter={statusFilter}
-        onFilter={setStatusFilter}
-      />
-      <div className={styles.hintRow}>
-        {searchTerm || statusFilter
-          ? `Showing ${resultCount} matching ${resultCount === 1 ? "task" : "tasks"}`
-          : `Showing all ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
       </div>
 
       {renderContent()}
 
       {showConfirmation && (
-        <div
-          className={styles.confirmationOverlay}
-          onClick={() => setShowConfirmation(false)}
-        >
+        <div className={styles.confirmationOverlay} onClick={() => setShowConfirmation(false)}>
           <div className={styles.confirmationDialog} onClick={(e) => e.stopPropagation()}>
             <h3>Reset Timer</h3>
             <p>
@@ -461,10 +556,7 @@ function Tasks({ onTaskAdded, initialTaskData }) {
               delete all timer entries and cannot be undone.
             </p>
             <div className={styles.confirmationButtons}>
-              <button
-                onClick={() => setShowConfirmation(false)}
-                className={styles.cancelButton}
-              >
+              <button onClick={() => setShowConfirmation(false)} className={styles.cancelButton}>
                 Cancel
               </button>
               <button onClick={confirmResetTimer} className={styles.confirmButton}>

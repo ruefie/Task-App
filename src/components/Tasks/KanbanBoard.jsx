@@ -16,10 +16,10 @@ function KanbanBoard({
   formatTime 
 }) {
   const groupedTasks = {
-    Todo: tasks.filter((task) => task.milestone === "Todo"),
+    "To Do": tasks.filter((task) => task.milestone === "To Do"),
     "On Going": tasks.filter((task) => task.milestone === "On Going"),
     "In Review": tasks.filter((task) => task.milestone === "In Review"),
-    Done: tasks.filter((task) => task.milestone === "Done"),
+    "Done": tasks.filter((task) => task.milestone === "Done"),
   };
 
   return (

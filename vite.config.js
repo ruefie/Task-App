@@ -8,6 +8,7 @@ export default defineConfig({
     fastRefresh: true,
     include: "**/*.jsx",
   })],
+  base: '/Task-App/',
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
@@ -23,4 +24,5 @@ export default defineConfig({
   build: {
     sourcemap: true
   }
+
 });
