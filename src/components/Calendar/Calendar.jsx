@@ -14,7 +14,7 @@ import TaskForm from "../Tasks/TaskForm";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTasks } from "../../contexts/TasksContext";
 import { useNotes } from "../../contexts/NotesContext";
-import NoteForm from "./NoteForm.jsx"
+import NoteForm from "./NoteForm"
 import Note from "./Note";
 import styles from "../../styles/Calendar.module.scss";
 import { showNotification } from "../../lib/notifications";
