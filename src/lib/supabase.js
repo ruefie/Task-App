@@ -1,14 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables:', {
-    url: supabaseUrl ? 'Defined' : 'Missing',
-    key: supabaseKey ? 'Defined' : 'Missing'
-  });
+if (!supabaseUrl || !supabaseAnonKey) {
+  // Avoid crashing the whole app; log + throw clear message
+  console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
+  throw new Error('Supabase env vars are missing. Check GitHub Actions secrets.');
 }
+
+// if (!supabaseUrl || !supabaseKey) {
+//   console.error('Missing Supabase environment variables:', {
+//     url: supabaseUrl ? 'Defined' : 'Missing',
+//     key: supabaseKey ? 'Defined' : 'Missing'
+//   });
+// }
 
 
 // Add error handling for Supabase operations
@@ -51,3 +59,6 @@ testConnection().then(result => {
     console.log('✅ Supabase connection successful');
   }
 });
+
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

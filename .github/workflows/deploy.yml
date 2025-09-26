@@ -36,6 +36,11 @@ jobs:
           echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env.production
           echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env.production
 
+      - name: Verify env presence
+        run: |
+          test -f .env.production && echo ".env.production present"
+          grep -E 'VITE_SUPABASE_(URL|ANON_KEY)=' .env.production | sed 's/=.*/=***REDaCTED***/'
+
       - name: Build
         run: npm run build
 
