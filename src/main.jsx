@@ -2,6 +2,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
+import './lib/chartjs-setup';
 
 import App from './App.jsx';
 import { SupabaseProvider } from './contexts/SupabaseContext';
