@@ -1,57 +1,62 @@
-// src/pages/ResetPassword.jsx
-import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import styles from '../styles/ResetPassword.module.scss'
 
- function ResetPassword() {
+function ResetPassword() {
   const navigate = useNavigate()
-  const { search, hash } = useLocation()
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState(null) // { type: 'error'|'success', text }
-
-  // STEP A: grab tokens from URL and set session
-  // useEffect(() => {
-  //   const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : search)
-  //   const access_token  = params.get('access_token')
-  //   const refresh_token = params.get('refresh_token')
-  //   if (access_token && refresh_token) {
-  //     supabase.auth
-  //       .setSession({ access_token, refresh_token })
-  //       .then(({ error }) => {
-  //         if (error) setMessage({ type: 'error', text: error.message })
-  //       })
-  //   } else {
-  //     setMessage({ type: 'error', text: 'Invalid recovery link.' })
-  //   }
-  // }, [])
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    // supabase.auth
-    //   .getSessionFromUrl({ storeSession: true })
-    //   .then(({ error }) => {
-    //     if (error) {
-    //       setMessage({ type: 'error', text: error.message })
-    //     }
-    //   })
-(async () => {
-    // v2 will auto-parse the URL with detectSessionInUrl
-    const { data: { session }, error } = await supabase.auth.getSession()
-    if (error) {
-     setMessage({ type: 'error', text: error.message })
-    } else if (!session) {
-      setMessage({ type: 'error', text: 'Invalid recovery link.' })
-    }
-    // now you can call supabase.auth.updateUser(…)
-  })()
+    let mounted = true
+
+    ;(async () => {
+      if (!supabase) {
+        setMessage({ type: 'error', text: 'Supabase is not configured.' })
+        setReady(true)
+        return
+      }
+
+      // Ask Supabase to parse the recovery token from the URL and store the session.
+      // Works for links like: /#/reset-password?type=recovery&access_token=...&refresh_token=...
+      try {
+        const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
+        if (error) {
+          // It’s OK if there’s no token to parse (e.g., user navigated here directly).
+          // We check for an existing session below.
+          // If the link is invalid/expired, show a friendly error.
+          // console.warn('getSessionFromUrl:', error.message)
+        }
+      } catch {
+        // ignore
+      }
+
+      // Verify we have a session (either from the token or already logged in).
+      const { data, error: sessErr } = await supabase.auth.getSession()
+      if (!mounted) return
+      if (sessErr) {
+        setMessage({ type: 'error', text: sessErr.message })
+      } else if (!data?.session) {
+        setMessage({ type: 'error', text: 'Invalid or expired recovery link.' })
+      }
+      setReady(true)
+    })()
+
+    return () => { mounted = false }
   }, [])
-  
-  // STEP B: submit new password
-  const handleSubmit = async e => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (newPassword !== confirmPassword) {
       setMessage({ type: 'error', text: 'Passwords do not match.' })
+      return
+    }
+
+    if (!supabase) {
+      setMessage({ type: 'error', text: 'Supabase is not configured.' })
       return
     }
 
@@ -60,41 +65,50 @@ import styles from '../styles/ResetPassword.module.scss'
       setMessage({ type: 'error', text: error.message })
     } else {
       setMessage({ type: 'success', text: 'Password updated! Redirecting to login…' })
-      setTimeout(() => navigate('/login'), 3000)
+      setTimeout(() => navigate('/login'), 2500) // HashRouter will resolve to #/login
     }
   }
 
   return (
     <div className={styles.container}>
-      <h2>Reset your password</h2>
+      <h2>Set a new password</h2>
+
       {message && (
         <div className={message.type === 'error' ? styles.error : styles.success}>
           {message.text}
         </div>
       )}
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <label>
-          New Password
-          <input
-            type="password"
-            value={newPassword}
-            onChange={e => setNewPassword(e.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Confirm Password
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit">Change Password</button>
-      </form>
+
+      {/* Only show the form once we’ve tried to establish a session */}
+      {ready ? (
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <label>
+            New Password
+            <input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+            />
+          </label>
+          <label>
+            Confirm Password
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+            />
+          </label>
+          <button type="submit">Change Password</button>
+        </form>
+      ) : (
+        <p style={{marginTop: 8}}>Preparing reset form…</p>
+      )}
     </div>
   )
 }
 
-export default ResetPassword;
+export default ResetPassword
