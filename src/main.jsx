@@ -1,7 +1,8 @@
 // src/main.jsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+// import { HashRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import './lib/chartjs-setup';
 
 import App from './App.jsx';
@@ -36,9 +37,9 @@ createRoot(rootEl).render(
           <TasksProvider>
             <NotesProvider>
               {/* HashRouter is ideal for GitHub Pages */}
-              <HashRouter>
+              <BrowserRouter basename="/Task-App">
                 <App />
-              </HashRouter>
+              </BrowserRouter>
             </NotesProvider>
           </TasksProvider>
         </AuthProvider>

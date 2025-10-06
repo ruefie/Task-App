@@ -28,7 +28,7 @@ function ForgotPassword() {
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         // Important: HashRouter route
-        redirectTo: `${baseUrl}/#/reset-password`,
+        redirectTo: `${baseUrl}/reset-password`,
       })
 
       if (error) {
