@@ -130,7 +130,7 @@ $hover-bg:      #f3f4f6;
 
 .chipActive {
   background: $primary-color;
-  color: $white;
+  color: var(--card);
   border-color: $primary-color;
 }
 

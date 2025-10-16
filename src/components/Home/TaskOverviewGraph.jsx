@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +14,6 @@ import {
 } from 'chart.js';
 import { Bar, Line, Doughnut, Pie } from 'react-chartjs-2';
 import styles from '../../styles/Home.module.scss';
-import { Pipette } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -29,47 +28,64 @@ ChartJS.register(
   Filler
 );
 
-const options = {
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: {
-    mode: 'index',
-    intersect: false,
-  },
-  plugins: {
-    legend: {
-      position: 'top',
-    },
-    title: {
-      display: false
-    }
-  },
-  scales: {
-    y: {
-      type: 'linear',
-      display: true,
-      position: 'left',
-      beginAtZero: true,
-      ticks: {
-        stepSize: 1
-      }
-    },
-    y1: {
-      type: 'linear',
-      display: true,
-      position: 'right',
-      beginAtZero: true,
-      grid: {
-        drawOnChartArea: false,
-      },
-      ticks: {
-        callback: (value) => `${value}%`
-      }
-    },
+// Draw a background color inside the actual plotting area
+const chartAreaBackground = {
+  id: 'chartAreaBg',
+  beforeDraw: (chart, _args, opts) => {
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return;
+    ctx.save();
+    ctx.fillStyle = opts?.color || '#fff';
+    ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+    ctx.restore();
   }
 };
+ChartJS.register(chartAreaBackground);
+
+// Helper to read a CSS variable with fallback
+const readVar = (name, fb) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fb;
+
+function useThemeTokens() {
+  const [ping, setPing] = useState(0);
+
+  useEffect(() => {
+    // Recompute tokens when the app toggles `data-theme`
+    const obs = new MutationObserver(() => setPing((x) => x + 1));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Recompute on system theme changes if user uses "system"
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => setPing((x) => x + 1);
+    mql.addEventListener('change', onChange);
+
+    return () => {
+      obs.disconnect();
+      mql.removeEventListener('change', onChange);
+    };
+  }, []);
+
+  // Read all needed tokens whenever ping changes
+  return useMemo(() => {
+    const card = readVar('--card', '#fff');
+    return {
+      text: readVar('--text', '#111827'),
+      border: readVar('--border', '#e5e7eb'),
+      card,
+      chartBg: readVar('--chart-bg', card),
+      grid: readVar('--chart-grid', '#e5e7eb'),
+      axis: readVar('--chart-axis', '#6b7280'),
+      tick: readVar('--chart-tick', '#6b7280'),
+      line: readVar('--chart-line', '#2563eb'),
+      tooltipBg: card,
+      tooltipBorder: readVar('--border', '#e5e7eb'),
+    };
+  }, [ping]);
+}
 
 function TaskOverviewGraph({ tasks }) {
+  const tokens = useThemeTokens();
+
   const now = new Date();
   const completedTasks = tasks.filter(t => t.completed).length;
   const inProgressTasks = tasks.filter(t => !t.completed && t.milestone === "On Going").length;
@@ -89,7 +105,51 @@ function TaskOverviewGraph({ tasks }) {
     return completedDate <= dueDate;
   }).length / (completedTasks || 1) * 100;
 
-  const data = {
+  const options = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { color: tokens.text },
+      },
+      title: { display: false, color: tokens.text },
+      tooltip: {
+        backgroundColor: tokens.tooltipBg,
+        borderColor: tokens.tooltipBorder,
+        borderWidth: 1,
+        titleColor: tokens.text,
+        bodyColor: tokens.text,
+        footerColor: tokens.text,
+      },
+      chartAreaBg: { color: tokens.chartBg }
+    },
+    scales: {
+      x: {
+        grid: { color: tokens.grid, borderColor: tokens.axis },
+        ticks: { color: tokens.tick }
+      },
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        beginAtZero: true,
+        grid: { color: tokens.grid, borderColor: tokens.axis },
+        ticks: { color: tokens.tick, stepSize: 1 }
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        beginAtZero: true,
+        grid: { drawOnChartArea: false, color: tokens.grid, borderColor: tokens.axis },
+        ticks: { color: tokens.tick, callback: (v) => `${v}%` }
+      },
+    }
+  }), [tokens]);
+
+  const data = useMemo(() => ({
     labels: ['Total', 'Completed', 'In Progress', 'Upcoming'],
     datasets: [
       {
@@ -134,9 +194,9 @@ function TaskOverviewGraph({ tasks }) {
         yAxisID: 'y1',
       }
     ]
-  };
+  }), [tasks, completedTasks, inProgressTasks, upcomingTasks, completionRate, onTimeCompletion]);
 
-  const priorityData = {
+  const priorityData = useMemo(() => ({
     labels: ['Urgent', 'High', 'Normal'],
     datasets: [{
       data: [urgentTasks, highTasks, normalTasks],
@@ -152,13 +212,13 @@ function TaskOverviewGraph({ tasks }) {
       ],
       borderWidth: 1
     }]
-  };
+  }), [urgentTasks, highTasks, normalTasks]);
 
   return (
     <div className={styles.graphContainer}>
       <div className={styles.graphGrid}>
         <div className={styles.mainGraph}>
-          <h3 className={styles.graphTitle}>Tasks Overview & Performance</h3>
+          <h3 className={styles.graphTitle}>Tasks Overview &amp; Performance</h3>
           <div className={styles.graph}>
             <Bar options={options} data={data} height={300} />
           </div>
@@ -166,17 +226,16 @@ function TaskOverviewGraph({ tasks }) {
         <div className={styles.sideGraph}>
           <h3 className={styles.graphTitle}>Priority Distribution</h3>
           <div className={styles.graph}>
-            <Pie 
-              data={priorityData} 
+            <Pie
+              data={priorityData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                  legend: {
-                    position: 'bottom',
-                  }
+                  legend: { position: 'bottom', labels: { color: tokens.text } },
+                  chartAreaBg: { color: tokens.chartBg }
                 }
-              }} 
+              }}
               height={200}
             />
           </div>

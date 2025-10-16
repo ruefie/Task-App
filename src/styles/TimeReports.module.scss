@@ -1,5 +1,5 @@
 .timeReports {
-  background-color: white;
+  background-color: var(--card-hover);
   border-radius: 0.5rem;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -15,9 +15,10 @@
     padding: 0.5rem 1rem;
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;
-    background-color: white;
+    background-color: var-(--card-soft);
     color: #4b5563;
     font-size: 0.875rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
 
@@ -28,7 +29,8 @@
     &.active {
       background-color: #3b82f6;
       border-color: #3b82f6;
-      color: white;
+      color: var(--text);
+  
     }
   }
 }
@@ -40,14 +42,19 @@
 }
 
 .statCard {
-  background-color: #f9fafb;
+  background-color: var(--card-hover);
+  box-shadow:
+    0 0 0 1px var(--btn-hover-outline), /* subtle outline ring */
+    0 6px 16px var(--elev);              /* soft elevation */
+  color: var(--text);
+  transform: scale(1);
   border-radius: 0.375rem;
   padding: 1rem;
 
   h4 {
     margin: 0 0 1rem;
     font-size: 0.875rem;
-    color: #6b7280;
+    
   }
 }
 
@@ -75,12 +82,12 @@
     }
 
     .legendLabel {
-      color: #4b5563;
+      color: var(--text);
     }
 
     .legendValue {
       font-weight: 500;
-      color: #1a1a1a;
+      color: var(--text);
     }
   }
 }

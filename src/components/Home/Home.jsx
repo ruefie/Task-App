@@ -261,7 +261,7 @@ function Home() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <NotificationToggle />
+      
         <h1>Hello {profile?.first_name}!</h1>
         <div className={styles.headerButtons}>
           <button

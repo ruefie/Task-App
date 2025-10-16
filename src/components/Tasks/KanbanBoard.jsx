@@ -50,8 +50,9 @@ function KanbanBoard({
                               <button
                                 onClick={(e) => { e.stopPropagation(); onToggleTask(task.id); }}
                                 className={styles.checkButton}
+                                title={task.completed ? "Mark as not done" : "Mark as done"}
                               >
-                                <Check size={20} />
+                                {task.completed && <Check size={20} />}
                               </button>
                               <div className={styles.taskActions}>
                                 <button

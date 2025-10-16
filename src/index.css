@@ -1,3 +1,53 @@
+/* Light (default) */
+:root {
+  --bg: #ffffff;
+  --text: #111827;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --card-soft: #ffffff;
+  --card-hover: #f7fafc;
+  --btn-hover-outline: rgba(17, 24, 39, .08);
+  --elev: rgba(0, 0, 0, .08);
+  --chart-bg: var(--card);          /* surface behind the plot */
+  --chart-grid: #e5e7eb;            /* grid lines (light) */
+  --chart-axis: #6b7280;            /* axis line color (light) */
+  --chart-tick: #6b7280;            /* tick/label color (light) */
+  --chart-line: #2563eb;            /* example series color */
+}
+
+/* System: if no data-theme is set, the OS dark pref will apply */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --text: #e5e7eb;
+    --card: #111827;
+    --border: #1f2937;
+  }
+}
+
+/* Manual overrides always win over system */
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --text: #111827;
+  --card: #ffffff;
+  --border: #e5e7eb;
+}
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --text: #e5e7eb;
+  --card: #111827;
+  --border: #1f2937;
+  --card-soft: #141b2c;
+  --card-hover: #1b2437; 
+  --btn-hover-outline: rgba(230, 237, 243, .15);
+  --elev: rgba(0, 0, 0, .45);
+  --chart-bg: var(--card);          /* keeps in sync with theme */
+  --chart-grid: #30363d;            /* subtle dark grid */
+  --chart-axis: #94a3b8;            /* slate-300-ish */
+  --chart-tick: #cbd5e1;            /* slate-200-ish */
+  --chart-line: #60a5fa;            /* lighter blue for contrast */
+}
+
 /* Reset default styles */
 /* Override iziToast’s wrapper so toasts stack vertically with space between */
 .iziToast-wrapper.iziToast-topRight,
@@ -44,6 +94,14 @@ button {
 
 
 
+
+
+
+/* Apply globally */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+}
 
 
 

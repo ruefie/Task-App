@@ -180,7 +180,7 @@ $background-color: #f9fafb;
   }
 
   &.desktop {
-    font-size: 0.875rem;
+    font-size: 1rem;
     .navIcon {
       margin-right: 0.75rem;
       height: 1.5rem;
@@ -227,7 +227,7 @@ $background-color: #f9fafb;
   .userName {
     font-size: 0.875rem;
     font-weight: 500;
-    color: $text-color;
+    color: #2563eb;
   }
   .signOutButton {
     display: flex;
@@ -306,4 +306,74 @@ $background-color: #f9fafb;
 
 .contentContainer {
   margin: 0 0 0 15rem;
+}
+
+
+/* === THEME BINDINGS (append at end of file) =============================== */
+/* Uses CSS variables from index.css: --bg, --card, --text, --border         */
+
+.container {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* Sidebars / shells */
+.mobileSidebar,
+.sidebarDesktop,
+.sidebarWrapper,
+.sidebarContent {
+  background-color: var(--card) !important;
+  color: var(--text) !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+/* Nav container + list area */
+.navContainer {
+  background-color: var(--card) !important;
+  color: var(--text) !important;
+  border-top: 1px solid var(--border);
+}
+
+.sidebarScrollArea,
+.userSection {
+  border-top: 1px solid var(--border) !important;
+}
+
+/* Main content surfaces */
+.mainContent,
+.mainArea,
+.contentWrapper,
+.contentContainer {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* Nav links */
+.navItem {
+  color: var(--text) !important;
+  transition: background-color .15s ease;
+}
+
+.navItem:hover:not(.active) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+:global([data-theme="dark"]) .navItem:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Active pill */
+.navItem.active {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  color: var(--text) !important;
+}
+:global([data-theme="dark"]) .navItem.active {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Make icons follow text color */
+.navIcon,
+.closeIcon,
+.menuIcon,
+.avatarIcon {
+  color: currentColor !important;
 }

@@ -1,6 +1,9 @@
 // src/components/tasks/Tasks.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Plus, RefreshCw, Clock, KanbanIcon, AlignLeftIcon, BarChart2 } from "lucide-react";
+// If your lucide build complains, use:
+// import { Plus, RefreshCw, Clock, KanbanSquare as KanbanIcon, AlignLeft as AlignLeftIcon, BarChart2 } from "lucide-react";
+
 import { useTasks } from "../../contexts/TasksContext";
 import { tasksService } from "../../lib/tasks";
 import { supabase } from "../../lib/supabaseClient";
@@ -13,132 +16,14 @@ import TaskDetails from "./TaskDetails";
 import TaskAnalytics from "./TaskAnalytics";
 import TasksToolbar from "./TasksToolbar";
 
-function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
+function Tasks({ onTaskAdded, initialTaskData , onExportCsv}) {
   const { tasks, setTasks, loadTasks, error, loading } = useTasks();
 
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [taskToReset, setTaskToReset] = useState(null);
-
-  const [userId, setUserId] = useState(null);
   const [viewMode, setViewMode] = useState("kanban");
-  const [autoArchiveDays, setAutoArchiveDays] = useState(0); // NEW
-  const FILTERS_KEY = "taskapp.filters";
-
-  // Load preferred view + auto-archive (local → DB → legacy local)
-  useEffect(() => {
-    (async () => {
-      try {
-        // 1) Fast local broadcast of preferred view
-        const lw = localStorage.getItem("ui.default_view");
-        if (lw === "kanban" || lw === "list") setViewMode(lw);
-
-        const { data: { user } } = await supabase.auth.getUser();
-        setUserId(user?.id ?? null);
-
-        let vFromDb = null;
-        let aaFromDb = null;
-
-        if (user) {
-          const { data } = await supabase
-            .from("user_settings")
-            .select("preferred_view, default_view, auto_archive_days")
-            .eq("user_id", user.id)
-            .maybeSingle();
-
-          const vDb = data?.preferred_view || data?.default_view;
-          if (vDb === "kanban" || vDb === "list") vFromDb = vDb;
-          if (typeof data?.auto_archive_days === "number") aaFromDb = data.auto_archive_days;
-        }
-
-        const ls = localStorage.getItem("taskapp.settings");
-        const parsed = ls ? JSON.parse(ls) : null;
-        const vLegacy = parsed?.preferred_view || parsed?.default_view;
-        const aaLegacy = typeof parsed?.auto_archive_days === "number" ? parsed.auto_archive_days : null;
-
-        if (!lw && (vFromDb === "kanban" || vFromDb === "list")) {
-          setViewMode(vFromDb);
-        } else if (!lw && !vFromDb && (vLegacy === "kanban" || vLegacy === "list")) {
-          setViewMode(vLegacy);
-        }
-
-        if (aaFromDb != null) setAutoArchiveDays(aaFromDb);
-        else if (aaLegacy != null) setAutoArchiveDays(aaLegacy);
-      } catch {
-        // ignore
-      }
-    })();
-  }, []);
-
-  // Reflect DB changes for preferred_view in realtime (optional)
-  useEffect(() => {
-    if (!userId) return;
-    const channel = supabase
-      .channel("user_settings_tasks")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "user_settings", filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const v = payload.new?.preferred_view || payload.new?.default_view;
-          if (v === "kanban" || v === "list") setViewMode(v);
-          if (typeof payload.new?.auto_archive_days === "number") {
-            setAutoArchiveDays(payload.new.auto_archive_days);
-          }
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [userId]);
-
-  // Listen for localStorage broadcasts (preferred view)
-  useEffect(() => {
-    const onStorage = (e) => {
-      try {
-        if (e.key === "taskapp.settings") {
-          const next = JSON.parse(e.newValue || "{}");
-          const v = next.preferred_view || next.default_view;
-          if (v === "kanban" || v === "list") setViewMode(v);
-          if (typeof next.auto_archive_days === "number") setAutoArchiveDays(next.auto_archive_days);
-        }
-        if (e.key === "ui.default_view") {
-          const v = e.newValue;
-          if (v === "kanban" || v === "list") setViewMode(v);
-        }
-      } catch {}
-    };
-    const onPreferredView = (e) => {
-      const v = e.detail;
-      if (v === "kanban" || v === "list") setViewMode(v);
-    };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("user_settings:preferred_view", onPreferredView);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("user_settings:preferred_view", onPreferredView);
-    };
-  }, []);
-
-  // Persist helper when user clicks view tabs
-  const applyAndSaveView = async (v) => {
-    setViewMode(v);
-    try {
-      if (userId) {
-        await supabase.from("user_settings").upsert(
-          { user_id: userId, preferred_view: v, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" }
-        );
-      }
-      const ls = localStorage.getItem("taskapp.settings");
-      const cur = ls ? JSON.parse(ls) : {};
-      localStorage.setItem("taskapp.settings", JSON.stringify({ ...cur, preferred_view: v, default_view: v }));
-      localStorage.setItem("ui.default_view", v);
-      try { window.dispatchEvent(new CustomEvent("user_settings:preferred_view", { detail: v })); } catch {}
-    } catch (err) {
-      console.warn("Failed to persist preferred_view:", err?.message || err);
-    }
-  };
-
   const [selectedTask, setSelectedTask] = useState(null);
   const [timers, setTimers] = useState({});
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -149,31 +34,15 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
-  const [dueFilter, setDueFilter] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  const [dueFilter, setDueFilter] = useState(""); // "", "overdue", "today", "week"
+  const [sortBy, setSortBy] = useState("");       // "", "due_asc", "due_desc", "priority_high", "name_asc", "name_desc"
 
-  useEffect(() => { loadTasks(); }, [loadTasks]);
-
-  // Load default filters from localStorage on mount
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || "{}");
-      if (typeof saved.searchTerm === "string") setSearchTerm(saved.searchTerm);
-      if (typeof saved.statusFilter === "string") setStatusFilter(saved.statusFilter);
-      if (typeof saved.priorityFilter === "string") setPriorityFilter(saved.priorityFilter);
-      if (typeof saved.dueFilter === "string") setDueFilter(saved.dueFilter);
-      if (typeof saved.sortBy === "string") setSortBy(saved.sortBy);
-    } catch {}
-  }, []);
+    loadTasks();
+  }, [loadTasks]);
 
-  // Persist filters whenever they change
   useEffect(() => {
-    const payload = { searchTerm, statusFilter, priorityFilter, dueFilter, sortBy };
-    localStorage.setItem(FILTERS_KEY, JSON.stringify(payload));
-  }, [searchTerm, statusFilter, priorityFilter, dueFilter, sortBy]);
-
-  // Track previous milestones
-  useEffect(() => {
+    // Store initial milestones for all tasks
     const milestones = {};
     tasks.forEach((task) => {
       if (!previousMilestones[task.id]) {
@@ -181,37 +50,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
       }
     });
     setPreviousMilestones((prev) => ({ ...prev, ...milestones }));
-  }, [tasks]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ---- Auto-archive (lazy on the client) ------------------------------------
-  useEffect(() => {
-    if (!autoArchiveDays || !tasks?.length) return;
-    const cutoffMs = Date.now() - autoArchiveDays * 24 * 60 * 60 * 1000;
-
-    const toArchive = tasks.filter((t) => {
-      if (t.archived_at) return false;
-      if (!t.completed) return false;
-      const ref =
-        t.updated_at || t.completed_at || t.due_date || t.start_date || t.created_at;
-      if (!ref) return false;
-      return new Date(ref).getTime() < cutoffMs;
-    });
-
-    if (!toArchive.length) return;
-
-    (async () => {
-      try {
-        const ids = toArchive.map((t) => t.id);
-        const nowIso = new Date().toISOString();
-        await supabase.from("tasks").update({ archived_at: nowIso }).in("id", ids);
-        setTasks((prev) =>
-          prev.map((t) => (ids.includes(t.id) ? { ...t, archived_at: nowIso } : t))
-        );
-      } catch (e) {
-        console.warn("auto-archive failed:", e?.message || e);
-      }
-    })();
-  }, [autoArchiveDays, tasks, setTasks]);
+  }, [tasks]);
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -426,15 +265,18 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
   const priorityOrder = { Urgent: 3, High: 2, Normal: 1 };
 
   const isToday = (d) => {
-    if (!d) return false;
+    if (!d) return false; 
     const x = new Date(d), now = new Date();
-    return x.getFullYear() === now.getFullYear() && x.getMonth() === now.getMonth() && x.getDate() === now.getDate();
+    return x.getFullYear() === now.getFullYear() &&
+           x.getMonth() === now.getMonth() &&
+           x.getDate() === now.getDate();
   };
 
   const isThisWeek = (d) => {
     if (!d) return false;
     const x = new Date(d);
     const now = new Date();
+    // Monday-based week start (common in DE). Change if you prefer Sunday.
     const dayOnly = (dt) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
     const start = dayOnly(now);
     const weekday = (start.getDay() + 6) % 7; // Mon=0..Sun=6
@@ -446,14 +288,11 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
 
   const isOverdue = (d) => d && new Date(d) < new Date() && !isToday(d);
 
-  // Hide archived by default
-  const activeTasks = useMemo(() => tasks.filter((t) => !t.archived_at), [tasks]);
-
   const filteredTasks = useMemo(() => {
     const q = (searchTerm || "").trim().toLowerCase();
     const milestoneFilter = statusFilter ? statusToMilestone[statusFilter] : "";
 
-    return activeTasks.filter((t) => {
+    return tasks.filter((t) => {
       if (milestoneFilter && (t.milestone || "") !== milestoneFilter) return false;
       if (priorityFilter && (t.priority || "") !== priorityFilter) return false;
 
@@ -472,7 +311,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
 
       return fields.some((f) => f.includes(q));
     });
-  }, [activeTasks, searchTerm, statusFilter, priorityFilter, dueFilter]);
+  }, [tasks, searchTerm, statusFilter, priorityFilter, dueFilter]);
 
   const sortedTasks = useMemo(() => {
     const arr = [...filteredTasks];
@@ -496,6 +335,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
     return arr;
   }, [filteredTasks, sortBy]);
 
+  // ✅ MISSING BEFORE: define counters used in the hint row
   const counters = useMemo(() => {
     return sortedTasks.reduce(
       (acc, t) => {
@@ -557,10 +397,9 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
     URL.revokeObjectURL(url);
   };
 
-  const exportCsvHandler = onExportCsv || exportCsv;
-
   const resultCount = sortedTasks.length;
 
+  // -------- Render ------------------------------------------------------------
   const renderContent = () => {
     if (loading) return <p className={styles.loading}>Loading your tasks...</p>;
 
@@ -569,18 +408,19 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
         <div className={styles.viewTabs}>
           <button
             className={`${styles.viewTabButton} ${viewMode === "kanban" ? styles.activeView : ""}`}
-            onClick={() => applyAndSaveView("kanban")}
+            onClick={() => setViewMode("kanban")}
           >
             <KanbanIcon /> Kanban
           </button>
           <button
             className={`${styles.viewTabButton} ${viewMode === "list" ? styles.activeView : ""}`}
-            onClick={() => applyAndSaveView("list")}
+            onClick={() => setViewMode("list")}
           >
             <AlignLeftIcon /> List
           </button>
         </div>
 
+        {/* NEW: Toolbar + result hint */}
         <TasksToolbar
           searchTerm={searchTerm}
           onSearch={setSearchTerm}
@@ -605,19 +445,22 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
         <div className={styles.hintRow}>
           {searchTerm || statusFilter || priorityFilter || dueFilter || sortBy
             ? `Showing ${resultCount} matching ${resultCount === 1 ? "task" : "tasks"} `
-            : `Showing all ${activeTasks.length} ${activeTasks.length === 1 ? "task" : "tasks"}`}
+            : `Showing all ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
           <span className={styles.counters}>
             : To Do: {counters.todo} • On Going: {counters.on_going} • In Review:{counters.in_review}  • Done: {counters.done}
           </span>
         </div>
 
+        {/* Add Task button */}
         {!showForm && (
           <button onClick={() => setShowForm(true)} className={styles.addButton}>
             <Plus size={20} />
             Add Task
           </button>
+          
         )}
-
+ <button className={styles.primaryBtn} onClick={onExportCsv}>Export CSV</button>
+        {/* Form */}
         {showForm && (
           <TaskForm
             onClose={() => {
@@ -632,6 +475,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
           />
         )}
 
+        {/* Views consume sortedTasks */}
         {viewMode === "kanban" ? (
           <KanbanBoard
             tasks={sortedTasks}
@@ -673,9 +517,6 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
       <div className={styles.header}>
         <h1>Tasks</h1>
         <div className={styles.headerActions}>
-          <button className={styles.primaryBtn} onClick={exportCsvHandler} title="Export current view">
-            Export CSV
-          </button>
           <button
             onClick={() => setShowAnalytics(!showAnalytics)}
             className={styles.analyticsToggle}
@@ -694,6 +535,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
 
       {showAnalytics && <TaskAnalytics tasks={sortedTasks} />}
 
+      {/* Summary row */}
       <div className={styles.summary}>
         <div className={styles.totalTime}>
           <Clock size={20} />

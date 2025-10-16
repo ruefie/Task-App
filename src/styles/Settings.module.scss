@@ -1,0 +1,99 @@
+@use "sass:color";
+
+$text-color: #374151;
+$border-color: #e5e7eb;
+$white: #ffffff;
+$primary-color: #2563eb;
+$hover-bg: #f3f4f6;
+$error-color: #ef4444;
+$success-color: #10b981;
+$warning-color: #f59e0b;
+
+.container {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 1rem;
+  color: var(--text);
+}
+
+h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+
+.card {
+  background: var(--card-soft);
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+
+  h2 { font-size: 1.1rem; margin: 0 0 .75rem; color: var(--text); }
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  padding: .6rem 0;
+  border-top: 1px dashed color.adjust($border-color, $lightness: -3%);
+
+  &:first-of-type { border-top: 0; }
+}
+
+.label { font-weight: 600; }
+.help { color: var(); font-size: .9rem; }
+
+.btn {
+  min-width: 80px;
+  padding: .45rem .75rem;
+  border: 1px solid $border-color;
+  border-radius: 10px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: background .15s ease;
+
+  &:hover { background: $hover-bg; }
+}
+.btnOn {
+  background: $primary-color;
+  color: $white;
+  border-color: $primary-color;
+  font-weight: 700;
+
+  &:hover {
+    background: color.adjust($primary-color, $lightness: -5%);
+  }
+}
+
+.select {
+  padding: .45rem .6rem;
+  margin: 1rem;
+  border: 1px solid $border-color;
+  border-radius: 10px;
+  background: var(--card-soft);
+  color: var(--text);
+
+  &:focus {
+    outline: 2px solid color.adjust($primary-color, $lightness: 20%);
+    outline-offset: 1px;
+  }
+}
+
+.switch {
+  position: relative; width: 46px; height: 26px;
+  input { display: none; }
+  span {
+    position: absolute; inset: 0; border-radius: 999px;
+    background: $border-color; transition: .2s;
+  }
+  span::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: $white; box-shadow: 0 1px 2px rgba(0,0,0,.1); transition: .2s;
+  }
+  input:checked + span { background: $primary-color; }
+  input:checked + span::after { transform: translateX(20px); }
+}
+
+.footer { margin-top: .5rem; }
+.dim { color: color.adjust($text-color, $lightness: 20%); font-size: .9rem; }
+.note { margin-top: .5rem; color: color.adjust($text-color, $lightness: 15%); }

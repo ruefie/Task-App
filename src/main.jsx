@@ -1,3 +1,17 @@
+// src/main.jsx (very top, before imports if you want zero flash)
+(() => {
+  try {
+    const t = localStorage.getItem('ui.theme');
+    const root = document.documentElement;
+    if (t && t !== 'system') root.setAttribute('data-theme', t);
+    else root.removeAttribute('data-theme');
+  } catch {}
+})();
+
+
+// Apply saved theme before React mounts (prevents flash)
+
+
 // src/main.jsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';

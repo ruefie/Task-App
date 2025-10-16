@@ -554,25 +554,7 @@ function Calendar() {
                   <span className={styles.weekDayNumber}>{day}</span>
                 </div>
                 <div className={styles.weekDayContent}>
-                  {tasksForDay.length > 0 && (
-                    <div className={styles.weekTasksList}>
-                      {tasksForDay.map((task) => (
-                        <div key={task.id} className={`${styles.weekTaskItem} ${getPriorityClass(task.priority)}`}>
-                          {task.name}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {notesForDay.length > 0 && (
-                    <div className={styles.weekNotesList}>
-                      {notesForDay.map((note) => (
-                        <div key={note.id} className={styles.weekNoteItem}>
-                          {note.title}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className={styles.weekDayActions}>
+                <div className={styles.weekDayActions}>
                     <button
                       className={styles.addWeekTask}
                       onClick={() => {
@@ -592,6 +574,26 @@ function Calendar() {
                       <StickyNote size={14} />
                     </button>
                   </div>
+                  {tasksForDay.length > 0 && (
+                    <div className={styles.weekTasksList}>
+                      {tasksForDay.map((task) => (
+                        <div key={task.id} className={`${styles.weekTaskItem} ${getPriorityClass(task.priority)}`}>
+                          {task.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {notesForDay.length > 0 && (
+                    <div className={styles.weekNotesList}>
+                      {notesForDay.map((note) => (
+                        <div key={note.id} className={styles.weekNoteItem}>
+                          {note.title}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                 </div>
               </div>
             );
@@ -761,7 +763,7 @@ function Calendar() {
   return (
     <div className={styles.container}>
       
-      <NotificationToggle />
+     
       
 {/* {Notification.permission === 'default' && (
   <NotificationToggle />

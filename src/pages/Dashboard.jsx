@@ -12,8 +12,10 @@ import {
   User,
   Home as HomeIcon,
   Settings,
+  Settings as SettingsIcon,
   Shield,
   AlertCircle,
+  UserRound,
 } from 'lucide-react';
 import styles from '../styles/Dashboard.module.scss';
 
@@ -23,6 +25,7 @@ const Calendar = lazy(() => import('../components/Calendar/Calendar.jsx'));
 const Tasks = lazy(() => import('../components/Tasks/Tasks.jsx'));
 const Profile = lazy(() => import('../components/Profile.jsx'));
 const AdminPanel = lazy(() => import('../components/AdminPanel.jsx'));
+const SettingsPage = lazy(() => import('../components/Settings.jsx'));
 
 // Loading component
 // const LoadingComponent = () => (
@@ -111,8 +114,12 @@ function Dashboard() {
                   className={`${styles.navItem} ${styles.mobile} ${isActiveRoute('/dashboard/profile') ? styles.active : ''}`}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <Settings className={styles.navIcon} />
+                  <UserRound className={styles.navIcon} />
                   Profile
+                </Link>
+                <Link to="/dashboard/settings" className={`${styles.navItem} ${isActiveRoute('/dashboard/settings') ? styles.active : ''}`}>
+                <SettingsIcon className={styles.navIcon} />
+                  Settings
                 </Link>
                 {isAdmin && (
                   <Link
@@ -183,9 +190,13 @@ function Dashboard() {
                     to="/dashboard/profile"
                     className={`${styles.navItem} ${styles.desktop} ${isActiveRoute('/dashboard/profile') ? styles.active : ''}`}
                   >
-                    <Settings className={styles.navIcon} />
+                    <UserRound className={styles.navIcon} />
                     Profile
                   </Link>
+                  <Link to="/dashboard/settings" className={`${styles.navItem} ${isActiveRoute('/dashboard/settings') ? styles.active : ''}`}>
+                <SettingsIcon className={styles.navIcon} />
+                  Settings
+                </Link>
                   {isAdmin && (
                     <Link
                       to="/dashboard/admin"
@@ -238,6 +249,7 @@ function Dashboard() {
                   <Route path="/calendar" element={<Calendar />} />
                   <Route path="/tasks" element={<Tasks />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<SettingsPage />} />
                   {isAdmin && (
                     <Route path="/admin" element={<AdminPanel />} />
                   )}

@@ -35,7 +35,7 @@ $radius: (
 );
 
 .noteItem {
-  background-color: map.get($colors, white);
+  background-color: var(--card-hover);
   border-radius: map.get($radius, md);
   padding: map.get($spacing, md);
   border: 1px solid map.get($colors, gray-200);
@@ -58,7 +58,7 @@ $radius: (
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
-    color: map.get($colors, gray-900);
+    color: var(--text);
   }
 }
 
@@ -102,7 +102,7 @@ $radius: (
 
 .noteContent {
   font-size: 0.875rem;
-  color: map.get($colors, gray-600);
+  color: var(--text);
   margin: map.get($spacing, sm) 0;
   line-height: 1.5;
 }
