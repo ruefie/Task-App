@@ -48,6 +48,44 @@ export const tasksService = {
     }
   },
 
+  async duplicateTask(taskId) {
+    const { data: src, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("id", taskId)
+      .single();
+    if (error || !src) throw error || new Error("Task not found");
+
+    const isDone =
+      src.milestone && String(src.milestone).toLowerCase() === "done";
+
+    const newTask = {
+      user_id: src.user_id, // must equal auth.uid() per RLS
+      name: `${src.name} (Copy)`,
+      description: src.description,
+      milestone: "To Do",      // keep 'Done' if that’s what you want
+      priority: src.priority,
+      start_date: src.start_date,
+      due_date: src.due_date,
+      assignee: src.assignee,
+      client: src.client,
+      project: src.project,
+      completed: false,
+      // carry over historical completion time for auto-archive
+      completed_at: null,
+      archived_at: null,              // never copy archived state
+      // created_at/updated_at are DB defaults
+    };
+
+    const { data: inserted, error: insErr } = await supabase
+      .from("tasks")
+      .insert(newTask)
+      .select()
+      .single();
+    if (insErr) throw insErr;
+    return inserted;
+  },
+
   async updateTask(taskId, taskData) {
     try {
       // const { attachments, timerEntries, timeSpent, isTimerRunning, id, created_at, updated_at, user_id, _prevMilestone, ...updateData } = taskData;

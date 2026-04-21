@@ -77,6 +77,16 @@ export default function Settings() {
 
       if (patch.theme) applyTheme(patch.theme);
       if (patch.preferred_view) broadcastView(patch.preferred_view);
+      // If auto-archive changed, run the archiver now
+       if (Object.prototype.hasOwnProperty.call(patch, 'auto_archive_days') && userId) {
+         try {
+           const { data, error } = await supabase.rpc('archive_old_completed_tasks');
+           if (error) console.warn('archive_old_completed_tasks RPC failed:', error.message);
+         else console.info(`Auto-archived ${data} tasks`);
+         } catch (e) {
+           console.warn('archive_old_completed_tasks RPC error:', e);
+         }
+       }
     } catch (e) {
       console.error('Save settings failed:', e);
     } finally {

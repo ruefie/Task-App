@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Trash2, Edit2, Building2, Briefcase, Clock, Play, Pause, StopCircle, Paperclip, Copy } from 'lucide-react';
+import { Check, Trash2, Edit2, Building2, Briefcase, Clock, Play, Pause, StopCircle, Paperclip, Copy , Archive, ArchiveRestore } from 'lucide-react';
 import styles from '../../styles/Tasks.module.scss';
 
 function TaskList({ 
@@ -11,7 +11,9 @@ function TaskList({
   onToggleTimer, 
   onPromptResetTimer,
   onCopyTask,
-  formatTime 
+  formatTime ,
+  onArchiveTask,
+  onRestoreTask
 }) {
   return (
     <div className={styles.listView}>
@@ -42,6 +44,25 @@ function TaskList({
                   >
                     <Copy size={16} />
                   </button>
+                  {task.archived_at ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onRestoreTask(task.id); }}
+                      className={styles.copyButton}
+                      title="Restore Task"
+                    >
+                      <ArchiveRestore size={16} />
+                    </button>
+                  ) : (
+                    task.completed && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onArchiveTask(task.id); }}
+                        className={styles.copyButton}
+                        title="Archive Task"
+                      >
+                        <Archive size={16} />
+                      </button>
+                    )
+                  )}
                   <button
                     onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); }}
                     className={styles.deleteButton}

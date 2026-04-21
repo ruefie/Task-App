@@ -23,30 +23,30 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
 
   const [userId, setUserId] = useState(null);
   const [viewMode, setViewMode] = useState("kanban");
-  const [autoArchiveDays, setAutoArchiveDays] = useState(0); // NEW
+  const [autoArchiveDays, setAutoArchiveDays] = useState(0);
+
+  // NEW: Show archived toggle (persisted)
+  const [showArchived, setShowArchived] = useState(false);
+
   const FILTERS_KEY = "taskapp.filters";
 
   // Load preferred view + auto-archive (local → DB → legacy local)
   useEffect(() => {
     (async () => {
       try {
-        // 1) Fast local broadcast of preferred view
         const lw = localStorage.getItem("ui.default_view");
         if (lw === "kanban" || lw === "list") setViewMode(lw);
 
         const { data: { user } } = await supabase.auth.getUser();
         setUserId(user?.id ?? null);
 
-        let vFromDb = null;
-        let aaFromDb = null;
-
+        let vFromDb = null, aaFromDb = null;
         if (user) {
           const { data } = await supabase
             .from("user_settings")
             .select("preferred_view, default_view, auto_archive_days")
             .eq("user_id", user.id)
             .maybeSingle();
-
           const vDb = data?.preferred_view || data?.default_view;
           if (vDb === "kanban" || vDb === "list") vFromDb = vDb;
           if (typeof data?.auto_archive_days === "number") aaFromDb = data.auto_archive_days;
@@ -57,21 +57,16 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
         const vLegacy = parsed?.preferred_view || parsed?.default_view;
         const aaLegacy = typeof parsed?.auto_archive_days === "number" ? parsed.auto_archive_days : null;
 
-        if (!lw && (vFromDb === "kanban" || vFromDb === "list")) {
-          setViewMode(vFromDb);
-        } else if (!lw && !vFromDb && (vLegacy === "kanban" || vLegacy === "list")) {
-          setViewMode(vLegacy);
-        }
+        if (!lw && (vFromDb === "kanban" || vFromDb === "list")) setViewMode(vFromDb);
+        else if (!lw && !vFromDb && (vLegacy === "kanban" || vLegacy === "list")) setViewMode(vLegacy);
 
         if (aaFromDb != null) setAutoArchiveDays(aaFromDb);
         else if (aaLegacy != null) setAutoArchiveDays(aaLegacy);
-      } catch {
-        // ignore
-      }
+      } catch {}
     })();
   }, []);
 
-  // Reflect DB changes for preferred_view in realtime (optional)
+  // Reflect DB changes in realtime (optional)
   useEffect(() => {
     if (!userId) return;
     const channel = supabase
@@ -82,16 +77,22 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
         (payload) => {
           const v = payload.new?.preferred_view || payload.new?.default_view;
           if (v === "kanban" || v === "list") setViewMode(v);
-          if (typeof payload.new?.auto_archive_days === "number") {
-            setAutoArchiveDays(payload.new.auto_archive_days);
-          }
+          if (typeof payload.new?.auto_archive_days === "number") setAutoArchiveDays(payload.new.auto_archive_days);
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [userId]);
 
-  // Listen for localStorage broadcasts (preferred view)
+  // Run server-side archiver once on load (nice-to-have)
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      await supabase.rpc('archive_old_completed_tasks'); // fire-and-forget
+    })();
+  }, [userId]);
+
+  // Listen for localStorage broadcasts
   useEffect(() => {
     const onStorage = (e) => {
       try {
@@ -124,10 +125,8 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
     setViewMode(v);
     try {
       if (userId) {
-        await supabase.from("user_settings").upsert(
-          { user_id: userId, preferred_view: v, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" }
-        );
+        await supabase.from("user_settings")
+          .upsert({ user_id: userId, preferred_view: v, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
       }
       const ls = localStorage.getItem("taskapp.settings");
       const cur = ls ? JSON.parse(ls) : {};
@@ -154,7 +153,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
 
   useEffect(() => { loadTasks(); }, [loadTasks]);
 
-  // Load default filters from localStorage on mount
+  // Load default filters from localStorage on mount (including showArchived)
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || "{}");
@@ -163,40 +162,37 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
       if (typeof saved.priorityFilter === "string") setPriorityFilter(saved.priorityFilter);
       if (typeof saved.dueFilter === "string") setDueFilter(saved.dueFilter);
       if (typeof saved.sortBy === "string") setSortBy(saved.sortBy);
+      if (typeof saved.showArchived === "boolean") setShowArchived(saved.showArchived);
     } catch {}
   }, []);
 
-  // Persist filters whenever they change
+  // Persist filters whenever they change (incl. showArchived)
   useEffect(() => {
-    const payload = { searchTerm, statusFilter, priorityFilter, dueFilter, sortBy };
+    const payload = { searchTerm, statusFilter, priorityFilter, dueFilter, sortBy, showArchived };
     localStorage.setItem(FILTERS_KEY, JSON.stringify(payload));
-  }, [searchTerm, statusFilter, priorityFilter, dueFilter, sortBy]);
+  }, [searchTerm, statusFilter, priorityFilter, dueFilter, sortBy, showArchived]);
 
   // Track previous milestones
   useEffect(() => {
     const milestones = {};
     tasks.forEach((task) => {
-      if (!previousMilestones[task.id]) {
-        milestones[task.id] = task.milestone;
-      }
+      if (!previousMilestones[task.id]) milestones[task.id] = task.milestone;
     });
     setPreviousMilestones((prev) => ({ ...prev, ...milestones }));
-  }, [tasks]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks]);
 
-  // ---- Auto-archive (lazy on the client) ------------------------------------
+  // ---- Auto-archive (lazy on client) ----
   useEffect(() => {
     if (!autoArchiveDays || !tasks?.length) return;
     const cutoffMs = Date.now() - autoArchiveDays * 24 * 60 * 60 * 1000;
-
     const toArchive = tasks.filter((t) => {
       if (t.archived_at) return false;
       if (!t.completed) return false;
-      const ref =
-        t.updated_at || t.completed_at || t.due_date || t.start_date || t.created_at;
+      const ref = t.updated_at || t.completed_at || t.due_date || t.start_date || t.created_at;
       if (!ref) return false;
       return new Date(ref).getTime() < cutoffMs;
     });
-
     if (!toArchive.length) return;
 
     (async () => {
@@ -204,9 +200,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
         const ids = toArchive.map((t) => t.id);
         const nowIso = new Date().toISOString();
         await supabase.from("tasks").update({ archived_at: nowIso }).in("id", ids);
-        setTasks((prev) =>
-          prev.map((t) => (ids.includes(t.id) ? { ...t, archived_at: nowIso } : t))
-        );
+        setTasks((prev) => prev.map((t) => (ids.includes(t.id) ? { ...t, archived_at: nowIso } : t)));
       } catch (e) {
         console.warn("auto-archive failed:", e?.message || e);
       }
@@ -217,9 +211,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleTaskClick = (task, e) => {
@@ -227,28 +219,22 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
     setSelectedTask(task);
   };
 
-  const handleCopyTask = (task) => {
-    const taskCopy = {
-      name: `${task.name} (Copy)`,
-      milestone: task.milestone,
-      priority: task.priority,
-      start_date: task.start_date,
-      due_date: task.due_date,
-      assignee: task.assignee,
-      client: task.client,
-      project: task.project,
-      description: task.description,
-      completed: false,
-    };
-    setCopyFromTask(taskCopy);
-    setShowForm(true);
+  const handleCopyTask = async (task) => {
+    try {
+      const inserted = await tasksService.duplicateTask(task.id);
+      // Optimistically add to state (top of list) or just reload
+      setTasks((prev) => [inserted, ...prev]);
+      // If you prefer to refresh from server instead:
+      // await loadTasks();
+    } catch (e) {
+      console.error("Duplicate task failed:", e);
+    }
   };
+  
 
   const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
-    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) {
-      return;
-    }
+    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) return;
     const task = tasks.find((t) => t.id === draggableId);
     if (!task) return;
 
@@ -256,24 +242,14 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
     const [movedTask] = newTasks.splice(newTasks.findIndex((t) => t.id === draggableId), 1);
     const newMilestone = destination.droppableId;
 
-    if (newMilestone === "Done") {
-      setPreviousMilestones((prev) => ({ ...prev, [draggableId]: movedTask.milestone }));
-    }
-
+    if (newMilestone === "Done") setPreviousMilestones((prev) => ({ ...prev, [draggableId]: movedTask.milestone }));
     movedTask.milestone = newMilestone;
     movedTask.completed = newMilestone === "Done";
 
-    newTasks.splice(
-      newTasks.findIndex((t) => t.milestone === newMilestone) + destination.index,
-      0,
-      movedTask
-    );
+    newTasks.splice(newTasks.findIndex((t) => t.milestone === newMilestone) + destination.index, 0, movedTask);
     setTasks(newTasks);
     try {
-      await tasksService.updateTask(draggableId, {
-        milestone: newMilestone,
-        completed: movedTask.completed,
-      });
+      await tasksService.updateTask(draggableId, { milestone: newMilestone, completed: movedTask.completed });
     } catch (error) {
       console.error("Error updating task after drag:", error);
       loadTasks();
@@ -289,10 +265,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
         completed: newCompleted,
         milestone: newCompleted ? "Done" : previousMilestones[id] || task.milestone,
       };
-
-      if (newCompleted) {
-        setPreviousMilestones((prev) => ({ ...prev, [id]: task.milestone }));
-      }
+      if (newCompleted) setPreviousMilestones((prev) => ({ ...prev, [id]: task.milestone }));
 
       await tasksService.updateTask(id, updatedData);
       setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updatedData } : t)));
@@ -306,18 +279,10 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
       await tasksService.deleteTask(id);
       if (timers[id]) {
         clearInterval(timers[id]);
-        setTimers((prev) => {
-          const n = { ...prev };
-          delete n[id];
-          return n;
-        });
+        setTimers((prev) => { const n = { ...prev }; delete n[id]; return n; });
       }
       setTasks((prev) => prev.filter((task) => task.id !== id));
-      setPreviousMilestones((prev) => {
-        const n = { ...prev };
-        delete n[id];
-        return n;
-      });
+      setPreviousMilestones((prev) => { const n = { ...prev }; delete n[id]; return n; });
     } catch (error) {
       console.error("Error deleting task:", error);
     }
@@ -330,17 +295,11 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
       try {
         const timerEntry = await tasksService.startTimer(taskId);
         const timer = setInterval(() => {
-          setTasks((prev) =>
-            prev.map((t) => (t.id === taskId ? { ...t, timeSpent: t.timeSpent + 1 } : t))
-          );
+          setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, timeSpent: t.timeSpent + 1 } : t)));
         }, 1000);
         setTimers((prev) => ({ ...prev, [taskId]: timer }));
         setTasks((prev) =>
-          prev.map((t) =>
-            t.id === taskId
-              ? { ...t, isTimerRunning: true, timerEntries: [...t.timerEntries, timerEntry] }
-              : t
-          )
+          prev.map((t) => (t.id === taskId ? { ...t, isTimerRunning: true, timerEntries: [...t.timerEntries, timerEntry] } : t))
         );
       } catch (error) {
         console.error("Error starting timer:", error);
@@ -368,11 +327,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
           );
         }
         clearInterval(timers[taskId]);
-        setTimers((prev) => {
-          const n = { ...prev };
-          delete n[taskId];
-          return n;
-        });
+        setTimers((prev) => { const n = { ...prev }; delete n[taskId]; return n; });
       } catch (error) {
         console.error("Error stopping timer:", error);
       }
@@ -396,20 +351,14 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
       }
       if (timers[taskId]) {
         clearInterval(timers[taskId]);
-        setTimers((prev) => {
-          const n = { ...prev };
-          delete n[taskId];
-          return n;
-        });
+        setTimers((prev) => { const n = { ...prev }; delete n[taskId]; return n; });
       }
       if (taskToReset.timerEntries && taskToReset.timerEntries.length > 0) {
         await supabase.from("timer_entries").delete().eq("task_id", taskId);
       }
       setTasks((prev) =>
         prev.map((task) =>
-          task.id === taskId
-            ? { ...task, timeSpent: 0, timerEntries: [], isTimerRunning: false }
-            : task
+          task.id === taskId ? { ...task, timeSpent: 0, timerEntries: [], isTimerRunning: false } : task
         )
       );
       setShowConfirmation(false);
@@ -446,14 +395,18 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
 
   const isOverdue = (d) => d && new Date(d) < new Date() && !isToday(d);
 
-  // Hide archived by default
-  const activeTasks = useMemo(() => tasks.filter((t) => !t.archived_at), [tasks]);
+  // #1 — Respect “Show archived” on the client (filters what the UI sees)
+  const visibleTasks = useMemo(
+    () => (showArchived ? tasks : (tasks || []).filter((t) => !t.archived_at)),
+    [tasks, showArchived]
+  );
 
+  // Apply all other filters to visibleTasks
   const filteredTasks = useMemo(() => {
     const q = (searchTerm || "").trim().toLowerCase();
     const milestoneFilter = statusFilter ? statusToMilestone[statusFilter] : "";
 
-    return activeTasks.filter((t) => {
+    return visibleTasks.filter((t) => {
       if (milestoneFilter && (t.milestone || "") !== milestoneFilter) return false;
       if (priorityFilter && (t.priority || "") !== priorityFilter) return false;
 
@@ -472,7 +425,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
 
       return fields.some((f) => f.includes(q));
     });
-  }, [activeTasks, searchTerm, statusFilter, priorityFilter, dueFilter]);
+  }, [visibleTasks, searchTerm, statusFilter, priorityFilter, dueFilter]);
 
   const sortedTasks = useMemo(() => {
     const arr = [...filteredTasks];
@@ -496,6 +449,7 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
     return arr;
   }, [filteredTasks, sortBy]);
 
+  // Counters based on what is currently displayed (post-filter/sort)
   const counters = useMemo(() => {
     return sortedTasks.reduce(
       (acc, t) => {
@@ -510,6 +464,10 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
     );
   }, [sortedTasks]);
 
+  // Total displayed count = sum of visible counters (fixes mismatch with DB total)
+  const totalDisplayed =
+    counters.todo + counters.on_going + counters.in_review + counters.done;
+
   // CSV export of the current (sorted/filtered) view
   const exportCsv = () => {
     const rows = sortedTasks.map((t) => ({
@@ -523,13 +481,14 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
       start_date: t.start_date,
       due_date: t.due_date,
       completed: t.completed ? "Yes" : "No",
-      time_spent_seconds: t.timeSpent ?? 0,
+      time_spent: formatTime(t.timeSpent ?? 0),
+      archived_at: t.archived_at || "",
     }));
 
     const header = Object.keys(
       rows[0] || {
         id: "", name: "", milestone: "", priority: "", assignee: "",
-        client: "", project: "", start_date: "", due_date: "", completed: "", time_spent_seconds: ""
+        client: "", project: "", start_date: "", due_date: "", completed: "", time_spent: "", archived_at: ""
       }
     );
 
@@ -558,8 +517,6 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
   };
 
   const exportCsvHandler = onExportCsv || exportCsv;
-
-  const resultCount = sortedTasks.length;
 
   const renderContent = () => {
     if (loading) return <p className={styles.loading}>Loading your tasks...</p>;
@@ -600,14 +557,15 @@ function Tasks({ onTaskAdded, initialTaskData, onExportCsv }) {
             setSortBy("");
           }}
           onExportCsv={exportCsv}
+          // Pass archived toggle through
+          showArchived={showArchived}
+          onShowArchived={setShowArchived}
         />
 
         <div className={styles.hintRow}>
-          {searchTerm || statusFilter || priorityFilter || dueFilter || sortBy
-            ? `Showing ${resultCount} matching ${resultCount === 1 ? "task" : "tasks"} `
-            : `Showing all ${activeTasks.length} ${activeTasks.length === 1 ? "task" : "tasks"}`}
+          {`Showing ${totalDisplayed} ${totalDisplayed === 1 ? "task" : "tasks"}`}
           <span className={styles.counters}>
-            : To Do: {counters.todo} • On Going: {counters.on_going} • In Review:{counters.in_review}  • Done: {counters.done}
+            : To Do: {counters.todo} • On Going: {counters.on_going} • In Review: {counters.in_review} • Done: {counters.done}
           </span>
         </div>
 

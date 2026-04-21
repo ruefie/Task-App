@@ -16,6 +16,8 @@ function TasksToolbar({
   onSortBy,
   onClearFilters,
   onExportCsv,
+  showArchived,
+  onShowArchived
 }) {
   const [value, setValue] = useState(searchTerm || "");
   useEffect(() => setValue(searchTerm || ""), [searchTerm]);
@@ -105,6 +107,14 @@ function TasksToolbar({
             {k === "" ? "All" : k === "overdue" ? "Overdue" : k === "today" ? "Today" : "This week"}
           </button>
         ))}
+        <label className={styles.checkbox}>
+  <input
+    type="checkbox"
+    checked={showArchived}
+    onChange={(e) => onShowArchived(e.target.checked)}
+  />
+  Show archived
+</label>
       </div>
 
       {/* Actions */}
